@@ -5,8 +5,8 @@ import numpy
 from os import listdir
 from os.path import isfile, join
 from sklearn.model_selection import train_test_split
-#from sklearn.cross_validation import train_test_split
-
+import tensorflow
+#from tensorflow.python.data import Dataset
 
 def loadData(directory):
 
@@ -78,6 +78,7 @@ def loadData(directory):
 	
 	trainset, testset = train_test_split(dataframe, test_size=0.2)
 	testset, validationset = train_test_split(testset, test_size=0.5)
+	"""
 	print(trainset.head())
 	print(trainset.size)
 	print(testset.head())
@@ -85,17 +86,50 @@ def loadData(directory):
 	print(validationset.head())
 	print(validationset.size)
 	#DataFrame.to_csv(path)
-	
+	"""
 	
 	
 	
 	
 	return trainset, testset, validationset
+def train_input_fn(features, labels, batch_size):
+    """An input function for training"""
+    # Convert the inputs to a Dataset.
+    dataset = tensorflow.data.Dataset.from_tensor_slices((dict(features), labels))
 
+    # Shuffle, repeat, and batch the examples.
+    dataset = dataset.batch(batch_size)
+	#ds = ds.batch(batch_size).repeat(num_epochs)
 	
-loadData('Test/')	
 	
-#print(loadData('Test/'))
+    # Return the dataset.
+    return dataset
+
+
+def eval_input_fn(features, labels, batch_size):
+    """An input function for evaluation or prediction"""
+    features=dict(features)
+    if labels is None:
+        # No labels, use only features.
+        inputs = features
+    else:
+        inputs = (features, labels)
+
+    # Convert the inputs to a Dataset.
+    dataset = tensorflow.data.Dataset.from_tensor_slices(inputs)
+
+    # Batch the examples
+    assert batch_size is not None, "batch_size must not be None"
+    dataset = dataset.batch(batch_size)
+
+    # Return the dataset.
+    return dataset
+	
+	
+	
+#loadData('../Test/')	
+	
+#print(loadData('../Test/'))
 
 
 #print(df.values) # as np array without indexes
