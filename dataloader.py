@@ -172,9 +172,9 @@ def eval_input_fn(features, labels, batch_size):
 	
 	
 	
-#loadData('../Test/')	
+#loadData('Testdata/')	
 	
-#print(loadData('../Test/'))
+#print(loadData('Testdata/'))
 
 
 #print(df.values) # as np array without indexes
