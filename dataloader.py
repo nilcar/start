@@ -92,13 +92,42 @@ def loadData(directory):
 	
 	
 	return trainset, testset, validationset
+	
+def get_model_data(dataframe):
+
+	dataframe = dataframe.reset_index()
+	dataframe.pop('truck_type')
+	dataframe.pop('truck_date')
+	string_labels = dataframe.pop('truck_id')
+	print('string labels size:' + str(string_labels.size))
+	# Holds mapping table lable to int representation. Also holds number of unique truck_id's
+	label_mapping = dict([(y,x+1) for x,y in enumerate(sorted(set(string_labels.tolist())))])
+	print('Length of label_mapping:' + str(len(label_mapping)))
+	#print(label_mapping)
+	
+	# Map all labels to integer representation
+	int_labels = pandas.Series()
+	for label in string_labels:
+		#print(label_mapping[label])
+		intlabel = label_mapping[label]
+		new_label = pandas.Series([intlabel])
+		#print(new_label)
+		int_labels = pandas.concat([int_labels, new_label], ignore_index=True)
+	
+	#int_labels.reset_index()
+	print('int labels size:' + str(int_labels.size))
+	#print(int_labels)
+
+	return string_labels, label_mapping, int_labels
+	
+	
 def train_input_fn(features, labels, batch_size):
     """An input function for training"""
     # Convert the inputs to a Dataset.
     dataset = tensorflow.data.Dataset.from_tensor_slices((dict(features), labels))
 
-    # Shuffle, repeat, and batch the examples.
-    dataset = dataset.batch(batch_size)
+    # repeat, and batch the examples.
+    dataset = dataset.repeat().batch(batch_size)
 	#ds = ds.batch(batch_size).repeat(num_epochs)
 	
 	
