@@ -88,37 +88,53 @@ def loadData(directory):
 	#DataFrame.to_csv(path)
 	"""
 	
-	
-	
-	
 	return trainset, testset, validationset
 	
-def get_model_data(dataframe):
+def get_model_data(dataframe, label_mapping):
 
+	# Clean up the dataframe to be converted into tensorflow datasets
 	dataframe = dataframe.reset_index()
 	dataframe.pop('truck_type')
 	dataframe.pop('truck_date')
 	string_labels = dataframe.pop('truck_id')
 	print('string labels size:' + str(string_labels.size))
-	# Holds mapping table lable to int representation. Also holds number of unique truck_id's
-	label_mapping = dict([(y,x+1) for x,y in enumerate(sorted(set(string_labels.tolist())))])
-	print('Length of label_mapping:' + str(len(label_mapping)))
+	
+	# Holds mapping table: lable to int representation. Also holds number of unique truck_id's
+	
+	# label mapping from data source files
+	#label_mapping = dict([(y,x+1) for x,y in enumerate(sorted(set(string_labels.tolist())))])
+	
+	next_index = len(label_mapping) # Assumes that label_mapping was built ordered from 0
+	for label in string_labels:
+		#print(label_mapping[label])
+		try:
+			intlabel = label_mapping[label] # Only to see if the label is possible to map
+		except KeyError:
+			#print('Missing label: ' + label + ' new index: ' + str(next_index))
+			label_mapping[label] = next_index
+			next_index = next_index + 1
+
+	print('Length of label_mapping: ' + str(len(label_mapping)))
 	#print(label_mapping)
 	
 	# Map all labels to integer representation
 	int_labels = pandas.Series()
 	for label in string_labels:
 		#print(label_mapping[label])
-		intlabel = label_mapping[label]
-		new_label = pandas.Series([intlabel])
+		try:
+			intlabel = label_mapping[label]
+			new_label = pandas.Series([intlabel])
+			int_labels = pandas.concat([int_labels, new_label], ignore_index=True)
+		except KeyError:
+			print('Error... Missing label: ' + label)
+		
 		#print(new_label)
-		int_labels = pandas.concat([int_labels, new_label], ignore_index=True)
-	
+
 	#int_labels.reset_index()
 	print('int labels size:' + str(int_labels.size))
 	#print(int_labels)
 
-	return string_labels, label_mapping, int_labels
+	return dataframe, string_labels, label_mapping, int_labels
 	
 	
 def train_input_fn(features, labels, batch_size):
@@ -128,8 +144,7 @@ def train_input_fn(features, labels, batch_size):
 
     # repeat, and batch the examples.
     dataset = dataset.repeat().batch(batch_size)
-	#ds = ds.batch(batch_size).repeat(num_epochs)
-	
+	#ds = ds.batch(batch_size).repeat(num_epochs) # num_epochs ?
 	
     # Return the dataset.
     return dataset
