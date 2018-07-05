@@ -61,7 +61,7 @@ def loadData(directory):
 			dataframe.loc[(index1, index2, index3), :] = 0.0 # Inserts a row with default 0.0 in each column
 			dataframe.loc[(index1, index2, index3), :].at[column] = value
 
-	print(dataframe.head())
+	#print(dataframe.head())
 	
 	
 	# DEBUG...
@@ -102,8 +102,9 @@ def get_model_data(dataframe, label_mapping):
 	# Holds mapping table: lable to int representation. Also holds number of unique truck_id's
 	
 	# label mapping from data source files
-	#label_mapping = dict([(y,x+1) for x,y in enumerate(sorted(set(string_labels.tolist())))])
+	#label_mapping_new = dict([(y,x+1) for x,y in enumerate(sorted(set(string_labels.tolist())))])
 	
+	# Assumes initial label_mapping from label data file, not necessary?
 	next_index = len(label_mapping) # Assumes that label_mapping was built ordered from 0
 	for label in string_labels:
 		#print(label_mapping[label])
