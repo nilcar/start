@@ -31,8 +31,8 @@ def loadData(directory):
 	csv_data = pandas.DataFrame()
 	for datafile in datafiles:
 		print(datafile)
-		csv_data = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, header=None)
-		csv_data.append(csv_data)
+		csv_data_file = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, header=None)
+		csv_data = csv_data.append(csv_data_file)
 	
 	print(csv_data.head())
 	
@@ -63,9 +63,8 @@ def loadData(directory):
 
 	#print(dataframe.head())
 	
-	
-	# DEBUG...
 	"""
+	# DEBUG...
 	for index, row in dataframe.iterrows():
 		for x in range(20):
 			for y in range(20):
@@ -138,13 +137,13 @@ def get_model_data(dataframe, label_mapping):
 	return dataframe, string_labels, label_mapping, int_labels
 	
 	
-def train_input_fn(features, labels, batch_size):
+def train_input_fn(features, labels, batch_size, nr_epochs):
     """An input function for training"""
     # Convert the inputs to a Dataset.
     dataset = tensorflow.data.Dataset.from_tensor_slices((dict(features), labels))
 
     # repeat, and batch the examples.
-    dataset = dataset.repeat().batch(batch_size)
+    dataset = dataset.repeat(nr_epochs).batch(batch_size)
 	#ds = ds.batch(batch_size).repeat(num_epochs) # num_epochs ?
 	
     # Return the dataset.
@@ -170,15 +169,8 @@ def eval_input_fn(features, labels, batch_size):
     # Return the dataset.
     return dataset
 	
-	
-	
-#loadData('Testdata/')	
-	
-#print(loadData('Testdata/'))
 
 
-#print(df.values) # as np array without indexes
-#print(pandas.DataFrame(df.values)) #pandas ndarray to dataframe with integer index, columns as integers.
 
 
 
