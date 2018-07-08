@@ -37,7 +37,8 @@ def main(argv):
 	data_path = 'Testdata/'
 	
 	#Get three structured separate dataframes from data sources
-	trainframe, testframe, validationframe = dataloader.loadData('Testdata/')
+	trainframe, testframe, validationframe = dataloader.loadData('Testdata/', False)
+	#trainframe, testframe, validationframe = dataloader.loadData('Compressed/', True)
 	label_mapping = dict() # If labels from label data file is not used
 	
 	"""
@@ -78,9 +79,7 @@ def main(argv):
 	my_feature_columns = []
 	for key in trainset.keys():
 		my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
-	
-	# Build 2 hidden layer DNN with 10, 10 units respectively.
-	# Two hidden layers of 10 nodes each.
+
 	# The model must choose between x classes.
 	print('Number of unique trucks, n_classes: ' + str(len(label_mapping)))
 	#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
@@ -106,7 +105,7 @@ def main(argv):
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids'][0]
 		probability = pred_dict['probabilities'][class_id]
-		print(template.format(expected[class_id], 100 * probability, expec))
+		#print(template.format(expected[class_id], 100 * probability, expec))
 	
 	
 	
