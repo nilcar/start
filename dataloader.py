@@ -51,11 +51,12 @@ def loadData(directory, compressed_data=False):
 			#print(csv_data_file.head())
 			csv_data = csv_data.append(csv_data_file, ignore_index=True)
 			del csv_data_file
-			#print('appended cvsfile nr: ' + str(nr))
+			print('appended cvsfile nr: ' + str(nr))
 			nr += 1
 	else:
 		# Read already structured data
 		csv_data = pandas.read_csv(datafiles[0], sep=";", index_col=False) #.drop(['unnamed 0'],axis=1)
+		
 	
 	print('Csv data from file')
 	print(csv_data.head())
@@ -85,7 +86,7 @@ def loadData(directory, compressed_data=False):
 				# insert value if indexed row exist
 				dataframe.loc[(index1, index2, index3), :].at[column] = value
 			except KeyError:
-				dataframe.loc[(index1, index2, index3), :] = 0.0 #numpy.nan # Inserts a row with default NaN in each x,y column
+				dataframe.loc[(index1, index2, index3), :] = numpy.nan # Inserts a row with default NaN in each x,y column
 				dataframe.loc[(index1, index2, index3), :].at[column] = value
 	else:
 		csv_data = csv_data.set_index(list(index_tuple))
@@ -98,8 +99,9 @@ def loadData(directory, compressed_data=False):
 	print(dataframe.head())
 	print('Size of dataframe data:' + str(dataframe.size))
 	
-	print('Saving frame data to csv file...\n')
+	
 	if not(compressed_data):
+		print('Saving frame data to csv file...\n')
 		datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 		datestring = datestring.replace(':', '-')
 		#dataframe.reset_index(drop = True, inplace = True)
@@ -116,6 +118,10 @@ def loadData(directory, compressed_data=False):
 				if row[column] != numpy.nan:
 					print(int(row[column]))
 	"""
+	
+	dataframe = dataframe.fillna(value = 0.0) # inplace = True
+	print('After filling')
+	print(dataframe.head())
 	
 	#print('Describe')
 	#dataframe.describe()
@@ -218,7 +224,7 @@ def eval_input_fn(features, labels, batch_size):
 	
 
 #loadData('Testdata/', False)
-#loadData('Data_original/', False)
+loadData('Data_original/', False)
 #loadData('Compressed/', True)
 
 
