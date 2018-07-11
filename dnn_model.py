@@ -29,8 +29,8 @@ def main(argv):
 	return
 	"""
 	
-	batch_size = 100
-	train_steps = 1000
+	batch_size = 1000
+	train_steps = 100
 	nr_epochs = None
 	hidden_units = [10, 10]
 	
@@ -44,7 +44,7 @@ def main(argv):
 	
 	
 	#Get three structured separate dataframes from data sources
-	trainframe, testframe, validationframe = dataloader.loadData('Testdata/', False, label_mapping)
+	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
 	#trainframe, testframe, validationframe = dataloader.loadData('Compressed/', True, label_mapping)
 	
 	
@@ -75,7 +75,7 @@ def main(argv):
     ### Train the Model.
 	print('\nModel training\n\n\n')
 	resultfile.write('\nModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\n')
-	classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs),steps=train_steps)
+	classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
 
 	### Test the model
 	print('\nModel testing\n\n\n')
