@@ -10,6 +10,7 @@ import tensorflow
 import argparse
 from os import listdir
 from os.path import isfile, join
+import datetime
 
 import dataloader
 
@@ -36,44 +37,29 @@ def main(argv):
 	label_path = 'Labels/'
 	data_path = 'Testdata/'
 	
+	# Label_mapping holds key value pairs where key is truck_id and value its integer representation
+	#label_mapping = dataloader.get_all_labels('All_labels/') # Labels from label file merged with label from data sources
+	label_mapping = dataloader.get_valid_labels(label_path) # Labels from labels file only
+	
+	
+	
 	#Get three structured separate dataframes from data sources
-	trainframe, testframe, validationframe = dataloader.loadData('Testdata/', False)
-	#trainframe, testframe, validationframe = dataloader.loadData('Compressed/', True)
-	label_mapping = dict() # If labels from label data file is not used
+	trainframe, testframe, validationframe = dataloader.loadData('Testdata/', False, label_mapping)
+	#trainframe, testframe, validationframe = dataloader.loadData('Compressed/', True, label_mapping)
 	
-	"""
-	# label mapping from labels files
-	datafiles = []
-	for item in listdir('Labels/'): 
-		if isfile(join(label_path, item)):
-			datafiles = datafiles.append(label_path + item)
-	print(datafiles)
 	
-	csv_label_data = pandas.DataFrame()
-	for datafile in datafiles:
-		print(datafile)
-		label_data = pandas.read_csv(datafile, sep=",")
-		csv_label_data = csv_label_data.append(label_data)
-		
-	string_labels = csv_label_data.pop('truck_id')
-	label_mapping = dict([(y,x+1) for x,y in enumerate(sorted(set(string_labels.tolist())))])
 	
-	"""
+	resultfile = open("Results/model_results.txt", "a")
 	
-	"""
-	csv_labels = pandas.read_csv('Labels/Volvo_labels_nominal.csv', sep=",")
-	#print(csv_labels)
-	all_truck_ids = csv_labels.pop('T_CHASSIS')
-	"""
 	
 	# Train model data
-	trainset, labels_training, label_mapping_train, int_labels_train = dataloader.get_model_data(trainframe, label_mapping)
+	trainset, labels_training, label_mapping, int_labels_train = dataloader.get_model_data(trainframe, label_mapping)
 	
 	# Test model data
-	testset, labels_test, label_mapping_test, int_labels_test = dataloader.get_model_data(testframe, label_mapping_train)
+	testset, labels_test, label_mapping, int_labels_test = dataloader.get_model_data(testframe, label_mapping)
 	
 	# Validate model data
-	validationset, labels_validate, label_mapping, int_labels_validate = dataloader.get_model_data(validationframe, label_mapping_test)
+	validationset, labels_validate, label_mapping, int_labels_validate = dataloader.get_model_data(validationframe, label_mapping)
 	
 	### Model training
 	my_feature_columns = []
@@ -88,16 +74,20 @@ def main(argv):
 	
     ### Train the Model.
 	print('\nModel training\n\n\n')
+	resultfile.write('\nModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\n')
 	classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs),steps=train_steps)
 
 	### Test the model
 	print('\nModel testing\n\n\n')
+	resultfile.write('\nModel testing\n\n\n')
 	# Evaluate the model.
 	eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
 	print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+	resultfile.write('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 	
 	### Evaluate the model
 	print('\nModel evaluation\n\n\n')
+	resultfile.write('\nModel evaluation\n\n\n')
 	expected = list(label_mapping.keys())
 	predictions = classifier.predict(input_fn=lambda:dataloader.eval_input_fn(validationset, labels=None, batch_size=batch_size))
 	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
@@ -106,9 +96,9 @@ def main(argv):
 		class_id = pred_dict['class_ids'][0]
 		probability = pred_dict['probabilities'][class_id]
 		#print(template.format(expected[class_id], 100 * probability, expec))
+		resultfile.write(template.format(expected[class_id], 100 * probability, expec))
 	
-	
-	
+	resultfile.write('\n\n******************************\n\n')
 	
 	
 	
