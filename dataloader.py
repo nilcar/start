@@ -1,5 +1,6 @@
 
 import datetime
+import math
 import pandas
 import numpy
 from os import listdir
@@ -113,18 +114,38 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 		print('Number of invalid labels: ' + str(invalid_labels))
 	
 	dataframe = dataframe.reset_index()
-	#dataframe.reset_index(drop = True, inplace = True)
+	
+	resultfile = open("Results/model_statistics.txt", "a")
+	
 	print('Structured data')
 	print(dataframe.head())
 	print('Size of dataframe data:' + str(dataframe.size))
 	
+	# This is the place to find the amount of NaN...
+	nr_of_nan = 0
+	nr_of_numbers = 0
+	for index, row in dataframe.iterrows():
+		for x in range(20):
+			for y in range(20):
+				if math.isnan(row[str(x) + '_' + str(y)]):
+					nr_of_nan += 1
+				else:
+					nr_of_numbers += 1
+	
+	nan_percent = 100 * nr_of_nan / (nr_of_nan + nr_of_numbers)
+	print('Numbers: ' + str(nr_of_numbers))
+	print('Nan: ' + str(nr_of_nan))
+	print('Nan in percent: ' + str(nan_percent))
+	resultfile.write('\nNumbers: ' + str(nr_of_numbers))
+	resultfile.write('\nNan: ' + str(nr_of_nan))
+	resultfile.write('\nNan in percent: ' + str(nan_percent))
 	
 	if not(compressed_data):
 		print('Saving frame data to csv file...\n')
 		datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 		datestring = datestring.replace(':', '-')
 		#print(dataframe.head())
-		dataframe.to_csv('Compressed/volvo_frame' + datestring + '.csv', sep=';', index = False, index_label = False)
+		dataframe.to_csv('Compressed/volvo_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
 	
 	# DEBUG...

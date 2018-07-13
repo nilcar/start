@@ -29,13 +29,14 @@ def main(argv):
 	return
 	"""
 	
-	batch_size = 1000
-	train_steps = 100
+	batch_size = 100
+	train_steps = 1000
 	nr_epochs = None
 	hidden_units = [10, 10]
 	
 	label_path = 'Labels/'
-	data_path = 'Testdata/'
+	data_path = 'Data_original/'
+	structured_data_path = 'Compressed/'
 	
 	# Label_mapping holds key value pairs where key is truck_id and value its integer representation
 	#label_mapping = dataloader.get_all_labels('All_labels/') # Labels from label file merged with label from data sources
@@ -45,8 +46,7 @@ def main(argv):
 	
 	#Get three structured separate dataframes from data sources
 	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
-	#trainframe, testframe, validationframe = dataloader.loadData('Compressed/', True, label_mapping)
-	
+	#trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping)
 	
 	
 	resultfile = open("Results/model_results.txt", "a")
