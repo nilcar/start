@@ -26,6 +26,8 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	truck_date = 'truck_date'
 	index_tuple = (truck_type, truck_id, truck_date)
 	
+	resultfile = open("Results/model_statistics.txt", "a")
+	
 	if compressed_data:
 		directory = 'Compressed/'
 	
@@ -93,6 +95,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 				index3 = row[truck_date]
 				column = str(row['x_index']) + '_' + str(row['y_index'])
 				value = row['value']
+				
 				try: 
 					# insert value if indexed row exist
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
@@ -115,11 +118,24 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	
 	dataframe = dataframe.reset_index()
 	
-	resultfile = open("Results/model_statistics.txt", "a")
-	
 	print('Structured data')
 	print(dataframe.head())
-	print('Size of dataframe data:' + str(dataframe.size))
+	print('Size of dataframe data with Nan:' + str(dataframe.size))
+	
+	# Check for rows with valid numbers of NaN...
+	numbers_of_nan = 0 # Max 400
+	#for index, row in dataframe.iterrows():		
+		# Some looping... 
+			
+			
+		# delete row that is invalid due to nr of NaN
+		#dataframe.drop(index)
+			
+			
+			
+	# continue # Check nest row instead
+	
+	print('Size of dataframe data after criteria for NaN exclusion(' + str(numbers_of_nan) +  ')' + str(dataframe.size))
 	
 	# This is the place to find the amount of NaN...
 	nr_of_nan = 0
@@ -161,9 +177,6 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	dataframe = dataframe.fillna(value = 0.0) # inplace = True
 	print('After filling')
 	print(dataframe.head())
-	
-	#print('Describe')
-	#dataframe.describe()
 	
 	trainset, testset = train_test_split(dataframe, test_size=0.2)
 	testset, validationset = train_test_split(testset, test_size=0.5)
@@ -285,11 +298,11 @@ def get_all_labels(directory):
 
 	return label_mapping
 
-def get_valid_labels(directory):	
+def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):	
 	
 	# label mapping from labels file
 	datafiles = []
-	for item in listdir(directory): 
+	for item in listdir(directory):
 		if isfile(join(directory, item)):
 			datafiles.append(directory + item)
 	print(datafiles)
@@ -298,15 +311,25 @@ def get_valid_labels(directory):
 	for datafile in datafiles:
 		print(datafile)
 		label_data = pandas.read_csv(datafile, sep=",")
-		string_labels = label_data.pop('T_CHASSIS')
+		string_labels = label_data.pop(choosen_label)
 		for index, label in string_labels.items():
 			label_mapping[label] = index
 			
 	#print(label_mapping)		
-	return	label_mapping	
+	return	label_mapping
 			
-			
-			
+
+def get_country_mapping(directory):			
+	
+	country_mapping = {}
+
+	# Get all valid chassi_nr's
+	
+	
+	# Create mapping between chassi_nr and country, chassi_nr as key
+	
+	
+	return country_mapping
 	
 #get_all_labels('All_labels/')		
 #get_valid_labels('Labels/')
