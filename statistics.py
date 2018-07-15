@@ -5,8 +5,12 @@ from os import listdir
 from os.path import isfile, join
 import pandas
 import datetime
+import matplotlib.pyplot as plt
 
-# Prints all labels merged from labels file and data source files
+
+
+
+# Prints statistical data to std out and writes a csv file with all labels merged from labels file and data source files
 def labels_statistics(directory):
 
 	label_path = 'Labels/'
@@ -22,7 +26,7 @@ def labels_statistics(directory):
 	label_mapping = {}
 	for datafile in datafiles:
 		print(datafile)
-		label_data = pandas.read_csv(datafile, sep=",")
+		label_data = pandas.read_csv(datafile, sep=";")
 		string_labels = label_data.pop('T_CHASSIS')
 		for index, label in string_labels.items():
 			label_mapping[label] = index
@@ -71,7 +75,7 @@ def labels_statistics(directory):
 		
 		
 #labels_statistics('Testdata/')	
-labels_statistics('Data_original/')
+#labels_statistics('Data_original/')
 		
 		
 		

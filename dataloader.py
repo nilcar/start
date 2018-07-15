@@ -8,6 +8,7 @@ from os.path import isfile, join
 
 from sklearn.model_selection import train_test_split
 import tensorflow
+from collections import OrderedDict
 
 
 
@@ -60,14 +61,18 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 		# Remove data where truck_id isn't in label_mapping
 		
 	print('Csv data from file')
-	print(csv_data.head())
-	
+	print(csv_data.head(10))
 	print('Shuffeling around the data randomously')
 	csv_data = csv_data.reindex(numpy.random.permutation(csv_data.index))
 	print('Size of read csv data:' + str(csv_data.size))
 	
 	print('Csv data after shuffeling')
-	print(csv_data.head())
+	print(csv_data.head(10))
+	
+	# get truck_id -> engine_type, country here... Dataframe with truck_id as index
+	
+	
+	
 	
 	if not(compressed_data):
 		# Build the target dataframe structure
@@ -76,8 +81,8 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 		dataframe[truck_id] = []
 		dataframe[truck_date] = []
 		print('Building struture and fill it with data\n')
-		for x in range(20):
-			for y in range(20):
+		for x in range(1, 21):
+			for y in range(1, 21):
 				dataframe[str(x) + '_' + str(y)] = []
 			
 		dataframe = dataframe.set_index(list(index_tuple))
@@ -99,9 +104,17 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 				try: 
 					# insert value if indexed row exist
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
+					# Add engine and country here...
+					
+					
+					
 				except KeyError:
 					dataframe.loc[(index1, index2, index3), :] = numpy.nan # Inserts a row with default NaN in each x,y column
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
+					# Add engine and country here...
+					
+					
+					
 				accepted_labels += 1
 			except KeyError:
 				# Source label did not exist 
@@ -119,7 +132,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	dataframe = dataframe.reset_index()
 	
 	print('Structured data')
-	print(dataframe.head())
+	print(dataframe.head(10))
 	print('Size of dataframe data with Nan:' + str(dataframe.size))
 	
 	# Check for rows with valid numbers of NaN...
@@ -141,8 +154,8 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	nr_of_nan = 0
 	nr_of_numbers = 0
 	for index, row in dataframe.iterrows():
-		for x in range(20):
-			for y in range(20):
+		for x in range(1, 21):
+			for y in range(1, 21):
 				if math.isnan(row[str(x) + '_' + str(y)]):
 					nr_of_nan += 1
 				else:
@@ -152,9 +165,9 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	print('Numbers: ' + str(nr_of_numbers))
 	print('Nan: ' + str(nr_of_nan))
 	print('Nan in percent: ' + str(nan_percent))
-	resultfile.write('\nNumbers: ' + str(nr_of_numbers))
-	resultfile.write('\nNan: ' + str(nr_of_nan))
-	resultfile.write('\nNan in percent: ' + str(nan_percent))
+	resultfile.write('\n\rNumbers: ' + str(nr_of_numbers))
+	resultfile.write('\n\rNan: ' + str(nr_of_nan))
+	resultfile.write('\n\rNan in percent: ' + str(nan_percent))
 	
 	if not(compressed_data):
 		print('Saving frame data to csv file...\n')
@@ -167,8 +180,8 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	# DEBUG...
 	"""
 	for index, row in dataframe.iterrows():
-		for x in range(20):
-			for y in range(20):
+		for x in range(1, 21):
+			for y in range(1, 21):
 				column = str(x) + '_' + str(y)
 				if row[column] != numpy.nan:
 					print(int(row[column]))
@@ -176,7 +189,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	
 	dataframe = dataframe.fillna(value = 0.0) # inplace = True
 	print('After filling')
-	print(dataframe.head())
+	print(dataframe.head(10))
 	
 	trainset, testset = train_test_split(dataframe, test_size=0.2)
 	testset, validationset = train_test_split(testset, test_size=0.5)
@@ -228,7 +241,8 @@ def get_model_data(dataframe, label_mapping):
 		try:
 			intlabel = label_mapping[label]
 			new_label = pandas.Series([intlabel])
-			int_labels = pandas.concat([int_labels, new_label], ignore_index=True)
+			#int_labels = pandas.concat([int_labels, new_label], ignore_index=True)
+			int_labels = int_labels.append(new_label, ignore_index=True)
 		except KeyError:
 			print('Error... Missing label: ' + label)
 		
@@ -310,16 +324,26 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 	label_mapping = {}
 	for datafile in datafiles:
 		print(datafile)
-		label_data = pandas.read_csv(datafile, sep=",")
+		label_data = pandas.read_csv(datafile, sep=";")
+		
+		#print('label structure')
+		#print(label_data.head(10))
+		
 		string_labels = label_data.pop(choosen_label)
+		#print(string_labels)
 		for index, label in string_labels.items():
+			#print(index)
 			label_mapping[label] = index
-			
+	
+	# Sorts the label_mapping by value (int representation)
+	label_mapping = OrderedDict(sorted(label_mapping.items(), key=lambda x: x[1]))
+	
 	#print(label_mapping)		
 	return	label_mapping
 			
-
-def get_country_mapping(directory):			
+# directory to read all labels from.
+# label_mapping holds dictionary (truck_id, int_representation)
+def get_label_mapping_frame(directory, label_mapping):			
 	
 	country_mapping = {}
 

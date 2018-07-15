@@ -62,6 +62,8 @@ def main(argv):
 	for key in trainset.keys():
 		my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
 
+	# opt = GradientDescentOptimizer(learning_rate=0.1) ??	
+		
 	# The model must choose between x classes.
 	print('Number of unique trucks, n_classes: ' + str(len(label_mapping)))
 	#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
@@ -69,13 +71,13 @@ def main(argv):
 	#classifier = tensorflow.estimator.DNNClassifier(feature_columns=my_feature_columns,hidden_units=[10, 10],n_classes=int_labels.size)
 	
     ### Train the Model.
-	print('\nModel training\n\n\n')
+	print('\nModel training\n\r\n\r\n')
 	resultfile.write('\nModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\n')
 	classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
 
 	### Test the model
 	print('\nModel testing\n\n\n')
-	resultfile.write('\nModel testing\n\n\n')
+	resultfile.write('\nModel testing\n\r\n\r\n')
 	# Evaluate the model.
 	eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
 	print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
@@ -83,7 +85,7 @@ def main(argv):
 	
 	### Evaluate the model
 	print('\nModel evaluation\n\n\n')
-	resultfile.write('\nModel evaluation\n\n\n')
+	resultfile.write('\nModel evaluation\n\r\n\r\n')
 	expected = list(label_mapping.keys())
 	predictions = classifier.predict(input_fn=lambda:dataloader.eval_input_fn(validationset, labels=None, batch_size=batch_size))
 	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
@@ -92,6 +94,7 @@ def main(argv):
 		class_id = pred_dict['class_ids'][0]
 		probability = pred_dict['probabilities'][class_id]
 		#print(template.format(expected[class_id], 100 * probability, expec))
+		resultfile.write('\n\r')
 		resultfile.write(template.format(expected[class_id], 100 * probability, expec))
 	
 	resultfile.write('\n\n******************************\n\n')
