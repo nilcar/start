@@ -72,7 +72,48 @@ def labels_statistics(directory):
 	datestring = datestring.replace(':', '-')
 	dataframe.to_csv('volvo_labels' + datestring + '.csv', sep=';', index = False, index_label = False)
 		
-		
+
+def column_statistics(directory):
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	dataframe = pandas.read_csv(datafiles[0], sep=";", index_col=False)
+	#print(dataframe.head(10))
+
+	column_values = pandas.Series()
+	for x in range(1, 21):
+		for y in range(1, 21):
+			column = str(x) + '_' + str(y)
+			values = dataframe.pop(column)
+			column_values = column_values.append(values, ignore_index=True)
+
+	#print(column_values)
+			
+	value_min = column_values.min()
+	value_max = column_values.max()
+	value_mean = column_values.mean()
+	value_std = column_values.std()
+	std3_level = value_std * 3
+	number_over_std3 = 0
+	for value in column_values:
+		if value > std3_level:
+			number_over_std3 += 1
+			
+	print('Number of values: ' + str(column_values.size))
+	print('Min value: ' + str(value_min))
+	print('Max value: ' + str(value_max))
+	print('Mean value: ' + str(value_mean))
+	print('Std value: ' + str(value_std))
+	print('Over 3 std value: ' + str(number_over_std3))
+	
+	
+	
+	
+	
+column_statistics('Compressed/')		
 		
 #labels_statistics('Testdata/')	
 #labels_statistics('Data_original/')

@@ -45,8 +45,8 @@ def main(argv):
 	label_mapping = dataloader.get_valid_labels(label_path) # Labels from labels file only
 	
 	#Get three structured separate dataframes from data sources
-	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
-	#trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping)
+	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
+	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping)
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = dataloader.get_model_data(trainframe, label_mapping)

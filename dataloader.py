@@ -191,7 +191,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	print('After filling')
 	print(dataframe.head(10))
 	
-	trainset, testset = train_test_split(dataframe, test_size=0.2)
+	trainset, testset = train_test_split(dataframe, test_size=0.4)
 	testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
 	
