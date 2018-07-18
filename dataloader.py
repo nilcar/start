@@ -5,6 +5,7 @@ import pandas
 import numpy
 from os import listdir
 from os.path import isfile, join
+import sys
 
 from sklearn.model_selection import train_test_split
 import tensorflow
@@ -23,7 +24,7 @@ If compressed is False; data will be read from csv source files and then structu
 def loadData(directory, compressed_data=False, label_mapping = []):
 
 	truck_type = 'truck_type'
-	truck_id = 'truck_id'
+	truck_id = 'T_CHASSIS'
 	truck_date = 'truck_date'
 	index_tuple = (truck_type, truck_id, truck_date)
 	
@@ -32,7 +33,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	if compressed_data:
 		directory = 'Compressed/'
 	
-	CSV_COLUMN_NAMES = ['A', 'B','truck_type', 'truck_id', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
+	CSV_COLUMN_NAMES = ['A', 'B','truck_type', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
 	
 	#print(len(CSV_COLUMN_NAMES))
 	
@@ -148,7 +149,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 			
 	# continue # Check nest row instead
 	
-	print('Size of dataframe data after criteria for NaN exclusion(' + str(numbers_of_nan) +  ')' + str(dataframe.size))
+	#print('Size of dataframe data after criteria for NaN exclusion(' + str(numbers_of_nan) +  ')' + str(dataframe.size))
 	
 	# This is the place to find the amount of NaN...
 	nr_of_nan = 0
@@ -191,7 +192,10 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	print('After filling')
 	print(dataframe.head(10))
 	
-	trainset, testset = train_test_split(dataframe, test_size=0.4)
+	#trainset, testset = train_test_split(dataframe, test_size=0.4)
+	#testset, validationset = train_test_split(testset, test_size=0.5)
+	
+	trainset, testset = train_test_split(dataframe, test_size=0.1)
 	testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
 	
@@ -207,47 +211,53 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	
 	return trainset, testset, validationset
 	
-def get_model_data(dataframe, label_mapping):
+def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 
-	# Clean up the dataframe to be converted into tensorflow datasets
-	dataframe.pop('truck_type')
-	dataframe.pop('truck_date')
-	string_labels = dataframe.pop('truck_id')
-	#print('string labels size:' + str(string_labels.size))
-	
-	#print('Dataframe for tensor slices')
-	#print(dataframe.head())
-	
-	#label_mapping_new = dict([(y,x+1) for x,y in enumerate(sorted(set(string_labels.tolist())))])
-	
-	# Assumes initial label_mapping from label data file as input to this function
-	next_index = len(label_mapping) # Assumes that label_mapping was built ordered from 0
-	for label in string_labels:
-		#print(label_mapping[label])
-		try:
-			intlabel = label_mapping[label] # Only to see if the label is possible to map
-		except KeyError:
-			print('Found missing label:  + label')
-			label_mapping[label] = next_index
-			next_index = next_index + 1
-
-	#print('Length of label_mapping: ' + str(len(label_mapping)))
-	#print(label_mapping)
-	
-	# Map all labels to integer representation
-	int_labels = pandas.Series()
-	for label in string_labels:
-		#print(label_mapping[label])
-		try:
-			intlabel = label_mapping[label]
-			new_label = pandas.Series([intlabel])
-			#int_labels = pandas.concat([int_labels, new_label], ignore_index=True)
-			int_labels = int_labels.append(new_label, ignore_index=True)
-		except KeyError:
-			print('Error... Missing label: ' + label)
+	if choosen_label == 'T_CHASSIS':
+		# Clean up the dataframe to be converted into tensorflow datasets
+		string_labels = dataframe.pop(choosen_label)
+		dataframe = dataframe.loc[:, '1_1':'20_20']
 		
-		#print(new_label)
+		#print('string labels size:' + str(string_labels.size))
+		#print('Dataframe for tensor slices')
+		#print(dataframe.head(10))
+			
+		# Assumes initial label_mapping from label data file as input to this function
+		next_index = len(label_mapping) # Assumes that label_mapping was built ordered from 0
+		for label in string_labels:
+			#print(label_mapping[label])
+			try:
+				intlabel = label_mapping[label] # Only to see if the label is possible to map
+			except KeyError:
+				print('Found missing label:  + label')
+				label_mapping[label] = next_index
+				next_index = next_index + 1
 
+		#print('Length of label_mapping: ' + str(len(label_mapping)))
+		#print(label_mapping)
+			
+		# Map all labels to integer representation
+		int_labels = pandas.Series()
+		for label in string_labels:
+			#print(label_mapping[label])
+			try:
+				intlabel = label_mapping[label]
+				new_label = pandas.Series([intlabel])
+				#int_labels = pandas.concat([int_labels, new_label], ignore_index=True)
+				int_labels = int_labels.append(new_label, ignore_index=True)
+			except KeyError:
+				print('Error... Missing label: ' + label)
+				
+				#print(new_label)
+	elif choosen_label == 'X':
+		print('ERROR invalid label choosen: ' + choosen_label)
+		sys.exit()
+	else:
+		print('ERROR invalid label choosen(default): ' + choosen_label)
+		sys.exit()
+		
+		
+		
 	#int_labels.reset_index()
 	print('int labels size:' + str(int_labels.size))
 	#print(int_labels)
@@ -287,8 +297,8 @@ def eval_input_fn(features, labels, batch_size):
     # Return the dataset.
     return dataset
 
-
-def get_all_labels(directory):
+# Only labels from data source file...
+def get_data_source_labels(directory):
 
 	label_mapping = {}
 	datafiles = []
@@ -312,6 +322,7 @@ def get_all_labels(directory):
 
 	return label_mapping
 
+	# Get all labels from labels file
 def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):	
 	
 	# label mapping from labels file
@@ -333,7 +344,11 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 		#print(string_labels)
 		for index, label in string_labels.items():
 			#print(index)
-			label_mapping[label] = index
+			try:
+				intlabel = label_mapping[label] # Only to see if the label is possible to map
+			except KeyError:
+				#print('Found missing label:  + label')
+				label_mapping[label] = index
 	
 	# Sorts the label_mapping by value (int representation)
 	label_mapping = OrderedDict(sorted(label_mapping.items(), key=lambda x: x[1]))
@@ -341,39 +356,48 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 	#print(label_mapping)		
 	return	label_mapping
 			
-# directory to read all labels from.
-# label_mapping holds dictionary (truck_id, int_representation)
-def get_label_mapping_frame(directory, label_mapping):			
 	
-	country_mapping = {}
+	# Adds label to the structure as a new column in the structured dataframe and save it to a file
+def add_label_to_struture(structure_directory, labels_directory, labelname):
 
-	# Get all valid chassi_nr's
+	#Get the existing structure
+	structurefiles = []
+	for item in listdir(structure_directory):
+		if isfile(join(structure_directory, item)):
+			structurefiles.append(structure_directory + item)
+	for datafile in structurefiles:
+		structured_data = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	#Get mapping from labels file
+	labelfiles = []
+	for item in listdir(labels_directory):
+		if isfile(join(labels_directory, item)):
+			labelfiles.append(labels_directory + item)
+	for datafile in labelfiles:
+		label_data = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	structured_data[labelname] = '' # New column with empty label values
+	# Loop through label_data and fill the structure with new label@ 'T_CHASSIS', labelname
+	for index_ld, row_ld in label_data.iterrows():
+		for index_sd, row_sd in structured_data.iterrows():
+			if row_ld['T_CHASSIS'] == row_sd['T_CHASSIS']:
+				row_sd[labelname] = row_ld[labelname]
 	
+	print(dataframe.head(10))
+	print('Saving frame data to csv file...\n')
+	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
+	datestring = datestring.replace(':', '-')
+	#dataframe.to_csv('Compressed/volvo_frame_labels--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
-	# Create mapping between chassi_nr and country, chassi_nr as key
+	return structured_data
+
 	
-	
-	return country_mapping
-	
-#get_all_labels('All_labels/')		
+#get_data_source_labels('Data_original/')		
 #get_valid_labels('Labels/')
 
 #loadData('Testdata/', False)
 #loadData('Data_original/', False)
 #loadData('Compressed/', True)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#add_label_to_struture('Compressed/', 'Labels/, 'COUNTRY'):
 
