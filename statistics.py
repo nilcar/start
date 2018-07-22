@@ -4,6 +4,7 @@
 from os import listdir
 from os.path import isfile, join
 import pandas
+import numpy
 import datetime
 import matplotlib.pyplot as plt
 
@@ -14,7 +15,7 @@ import matplotlib.pyplot as plt
 def labels_statistics(directory):
 
 	label_path = 'Labels/'
-	CSV_COLUMN_NAMES = ['A', 'B','truck_type', 'truck_id', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
+	CSV_COLUMN_NAMES = ['A', 'B','truck_type', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
 
 	# label mapping from labels file
 	datafiles = []
@@ -45,14 +46,14 @@ def labels_statistics(directory):
 		#print(datafile)
 		csv_data_file = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, header=None, index_col=False)
 		#print(csv_data_file.head())
-		string_labels = csv_data_file.pop('truck_id')
+		string_labels = csv_data_file.pop('T_CHASSIS')
 		del csv_data_file
 		print('Read cvsfile nr: ' + str(nr))
 		nr += 1
 		for label in string_labels:
 			#print(label_mapping[label])
 			try:
-				intlabel = label_mapping[label] # Only to see if the label is possible to map
+				intlabel = label_mapping[label] # Only to see if the label is possible to map from labels in label file...
 			except KeyError:
 				#print('Missing label: ' + label + ' new index: ' + str(next_index))
 				label_mapping[label] = next_index
@@ -73,8 +74,9 @@ def labels_statistics(directory):
 	dataframe.to_csv('volvo_labels' + datestring + '.csv', sep=';', index = False, index_label = False)
 		
 
-def column_statistics(directory):
+def column_statistics(directory, zero_values_excluded = False):
 
+	zero_values = 'with zero values'
 	datafiles = []
 	for item in listdir(directory): 
 		if isfile(join(directory, item)):
@@ -83,6 +85,10 @@ def column_statistics(directory):
 	dataframe = pandas.read_csv(datafiles[0], sep=";", index_col=False)
 	#print(dataframe.head(10))
 
+	if zero_values_excluded:
+		dataframe = dataframe.replace(0.0, numpy.nan)
+		zero_values = 'without zero values'
+		
 	min_values = pandas.Series()
 	max_values = pandas.Series()
 	mean_values = pandas.Series()
@@ -96,20 +102,12 @@ def column_statistics(directory):
 			column = str(x) + '_' + str(y)
 			number_over_std3 = 0
 			
-			
 			min_values = min_values.append(pandas.Series(dataframe.loc[:,column].min()))
 			max_values = max_values.append(pandas.Series(dataframe.loc[:,column].max()))
 			mean_values = mean_values.append(pandas.Series(dataframe.loc[:,column].mean()))
 			std_values = std_values.append(pandas.Series(dataframe.loc[:,column].std()))
 			
 			values = dataframe.pop(column)
-			"""
-			min_values = min_values.append(pandas.Series([values.min()]), ignore_index=True)
-			max_values = max_values.append(pandas.Series([values.max()]), ignore_index=True)
-			mean_values = mean_values.append(pandas.Series([values.mean()]), ignore_index=True)
-			std_values = std_values.append(pandas.Series([values.std()]), ignore_index=True)
-			"""
-			
 			for value in values:
 				if value > (values.std() * 3):
 					number_over_std3 += 1
@@ -138,50 +136,48 @@ def column_statistics(directory):
 	print('Std value: ' + str(value_std) + '\n\r')
 	print('Over 3 std value: ' + str(number_over_std3) + '\n\r')
 	
-	min_values.plot(kind='hist')
-	plt.title("Min values")
-	plt.savefig("Histograms/Min_values.png")
+	mean_values.plot(kind='hist', bins=40)
+	x1,x2,y1,y2 = plt.axis()
+	plt.axis((x1,x2,y1,400))
+	plt.title("Mean values " + zero_values + ' Number of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Mean_values-" + zero_values + ".png")
+	plt.clf()
+		
+	min_values.plot(kind='hist', bins=40)
+	plt.axis((x1,x2,y1,400))
+	plt.title("Min values " + zero_values + ' Number of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Min_values-" + zero_values + ".png")
 	plt.clf()
 	
-	max_values.plot(kind='hist')
-	plt.title("Max values")
-	plt.savefig("Histograms/Max_values.png")
+	max_values.plot(kind='hist', bins=40)
+	plt.axis((x1,x2,y1,400))
+	plt.title("Max values " + zero_values + ' Number of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Max_values-" + zero_values + ".png")
 	plt.clf()
 	
-	mean_values.plot(kind='hist')
-	plt.title("Mean values")
-	plt.savefig("Histograms/Mean_values.png")
+	std_values.plot(kind='hist', bins=40)
+	plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation values " + zero_values + ' Number of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std_values-" + zero_values + ".png")
 	plt.clf()
 	
-	std_values.plot(kind='hist')
-	plt.title("Standard deviation values")
-	plt.savefig("Histograms/Std_values.png")
-	plt.clf()
-	
-	std3_values.plot(kind='hist')
-	plt.title("Standard deviation times 3 values")
-	plt.savefig("Histograms/Std3_values.png")
+	std3_values.plot(kind='hist', bins=40)
+	plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation times 3 values " + zero_values + ' Number of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std3_values-" + zero_values + ".png")
 	plt.clf()
 	#plt.show()
-	
-	
-	#plt.hist(mean_values, bins=20) ?
-	
-	#plt.xlabel('xlabel')
-	#plt.ylabel('ylabel')
-	
-	#plt.grid(True)
-	
-	#plt.clf()
-	#plt.cla()
-	#plt.close()
-	
+
 	return
 	
-	
-column_statistics('Compressed/')		
+column_statistics('Compressed/Compressed_valid_chassis/', False) # Compressed_single	
+column_statistics('Compressed/Compressed_valid_chassis/', True) # Compressed_single
 		
-
 #labels_statistics('Data_original/')
 		
 		

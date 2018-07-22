@@ -10,20 +10,20 @@ import sys
 from sklearn.model_selection import train_test_split
 import tensorflow
 from collections import OrderedDict
-
-
-
 #from tensorflow.python.data import Dataset
+
+
 
 """
 Returns three pandas dataframes randomously shuffled data with standard index
 If compressed is True; data will be read from a csv file with already structured data.
 If compressed is False; data will be read from csv source files and then structured
+labelmapping should been done before outside this function and come as an filled dictionary
 """
 
 def loadData(directory, compressed_data=False, label_mapping = []):
 
-	truck_type = 'truck_type'
+	truck_type = 'truck'
 	truck_id = 'T_CHASSIS'
 	truck_date = 'truck_date'
 	index_tuple = (truck_type, truck_id, truck_date)
@@ -33,7 +33,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	if compressed_data:
 		directory = 'Compressed/'
 	
-	CSV_COLUMN_NAMES = ['A', 'B','truck_type', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
+	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
 	
 	#print(len(CSV_COLUMN_NAMES))
 	
@@ -70,11 +70,6 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	print('Csv data after shuffeling')
 	print(csv_data.head(10))
 	
-	# get truck_id -> engine_type, country here... Dataframe with truck_id as index
-	
-	
-	
-	
 	if not(compressed_data):
 		# Build the target dataframe structure
 		dataframe = pandas.DataFrame()
@@ -107,14 +102,10 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
 					# Add engine and country here...
 					
-					
-					
 				except KeyError:
 					dataframe.loc[(index1, index2, index3), :] = numpy.nan # Inserts a row with default NaN in each x,y column
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
 					# Add engine and country here...
-					
-					
 					
 				accepted_labels += 1
 			except KeyError:
@@ -141,15 +132,14 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	#for index, row in dataframe.iterrows():		
 		# Some looping... 
 			
-			
 		# delete row that is invalid due to nr of NaN
 		#dataframe.drop(index)
 			
-			
-			
 	# continue # Check nest row instead
 	
+	
 	#print('Size of dataframe data after criteria for NaN exclusion(' + str(numbers_of_nan) +  ')' + str(dataframe.size))
+	
 	
 	# This is the place to find the amount of NaN...
 	nr_of_nan = 0
@@ -177,28 +167,15 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 		#print(dataframe.head())
 		dataframe.to_csv('Compressed/volvo_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
-	
-	# DEBUG...
-	"""
-	for index, row in dataframe.iterrows():
-		for x in range(1, 21):
-			for y in range(1, 21):
-				column = str(x) + '_' + str(y)
-				if row[column] != numpy.nan:
-					print(int(row[column]))
-	"""
-	
 	dataframe = dataframe.fillna(value = 0.0) # inplace = True
 	print('After filling')
 	print(dataframe.head(10))
 	
 	#trainset, testset = train_test_split(dataframe, test_size=0.4)
 	#testset, validationset = train_test_split(testset, test_size=0.5)
-	
 	trainset, testset = train_test_split(dataframe, test_size=0.1)
 	testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
-	
 	
 	"""
 	print(trainset.head())
@@ -214,7 +191,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 
 	if choosen_label == 'T_CHASSIS':
-		# Clean up the dataframe to be converted into tensorflow datasets
+		# Clean up the dataframe to be converted into tensorflow datasets (features and labels)
 		string_labels = dataframe.pop(choosen_label)
 		dataframe = dataframe.loc[:, '1_1':'20_20']
 		
@@ -249,14 +226,13 @@ def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 				print('Error... Missing label: ' + label)
 				
 				#print(new_label)
+				
 	elif choosen_label == 'X':
 		print('ERROR invalid label choosen: ' + choosen_label)
 		sys.exit()
 	else:
 		print('ERROR invalid label choosen(default): ' + choosen_label)
 		sys.exit()
-		
-		
 		
 	#int_labels.reset_index()
 	print('int labels size:' + str(int_labels.size))
@@ -297,32 +273,7 @@ def eval_input_fn(features, labels, batch_size):
     # Return the dataset.
     return dataset
 
-# Only labels from data source file...
-def get_data_source_labels(directory):
-
-	label_mapping = {}
-	datafiles = []
-	for item in listdir(directory): 
-		if isfile(join(directory, item)):
-			datafiles.append(directory + item)
-			
-	# Assumes only one file...		
-	for datafile in datafiles:
-		#print(datafile)
-		label_data_frame = pandas.read_csv(datafile, sep=";", index_col=False)		
-	
-	for index, row in label_data_frame.iterrows():
-		label_mapping[row['Chassi_nr']] = row['Int_label']
-	
-	
-	#print(label_mapping)
-	#print(label_data_file.head())	
-			
-	
-
-	return label_mapping
-
-	# Get all labels from labels file
+	# Get label_mapping dictionary for choosen label
 def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):	
 	
 	# label mapping from labels file
@@ -357,8 +308,9 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 	return	label_mapping
 			
 	
-	# Adds label to the structure as a new column in the structured dataframe and save it to a file
-def add_label_to_struture(structure_directory, labels_directory, labelname):
+	# Adds labels to the structure as a new columns in the structured dataframe and saves it to a file
+	# This combines the data in the "structured datasources" and the data in the labels file.
+def add_labels_to_structure(structure_directory, labels_directory):
 
 	#Get the existing structure
 	structurefiles = []
@@ -376,18 +328,44 @@ def add_label_to_struture(structure_directory, labels_directory, labelname):
 	for datafile in labelfiles:
 		label_data = pandas.read_csv(datafile, sep=";", index_col=False)
 
-	structured_data[labelname] = '' # New column with empty label values
-	# Loop through label_data and fill the structure with new label@ 'T_CHASSIS', labelname
-	for index_ld, row_ld in label_data.iterrows():
+		
+	structured_data = structured_data.set_index('T_CHASSIS')
+	label_data = label_data.set_index('T_CHASSIS')	
+
+	for labelname in label_data.columns:
+		if str(labelname) != 'T_CHASSIS':
+			structured_data[labelname] = ''	
+		# Loop through label_data and fill the structure with new label@ 'T_CHASSIS', labelnames
 		for index_sd, row_sd in structured_data.iterrows():
-			if row_ld['T_CHASSIS'] == row_sd['T_CHASSIS']:
-				row_sd[labelname] = row_ld[labelname]
+			if labelname != 'T_CHASSIS':
+				#value = label_data.loc[(index_sd, labelname)]
+				structured_data.loc[(index_sd, labelname)] = label_data.loc[(index_sd, labelname)]
+				# dataframe.loc[(index1, index2, index3), :] = numpy.nan
 	
-	print(dataframe.head(10))
+	structured_data = structured_data.reset_index()	
+		
+	"""
+	# New columns with empty label values
+	for labelname in label_data.columns:
+		if str(labelname) != 'T_CHASSIS':
+			structured_data[labelname] = ''
+	
+	# Loop through label_data and fill the structure with new label@ 'T_CHASSIS', labelnames
+		for index_ld, row_ld in label_data.iterrows():
+			for index_sd, row_sd in structured_data.iterrows():
+				for labelname in label_data.columns:
+					if str(labelname) != 'T_CHASSIS':
+						if row_ld['T_CHASSIS'] == row_sd['T_CHASSIS']:
+							row_sd[labelname] = row_ld[labelname]
+	"""						
+							
+	
+	print(structured_data.head(10))
+	
 	print('Saving frame data to csv file...\n')
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	#dataframe.to_csv('Compressed/volvo_frame_labels--' + datestring + '.csv', sep=';', index = False, index_label = False)
+	structured_data.to_csv('Compressed/new_volvo_frame_all_labels--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
 	return structured_data
 
@@ -399,5 +377,6 @@ def add_label_to_struture(structure_directory, labels_directory, labelname):
 #loadData('Data_original/', False)
 #loadData('Compressed/', True)
 
-#add_label_to_struture('Compressed/', 'Labels/, 'COUNTRY'):
+#add_labels_to_structure('Compressed/Compressed_single/', 'Labels/')
+add_labels_to_structure('Compressed/Compressed_valid_chassis/', 'Labels/')
 

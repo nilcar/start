@@ -30,9 +30,9 @@ def main(argv):
 	"""
 	
 	batch_size = 100 # 100
-	train_steps = 10000 # 1000
+	train_steps = 100000 # 1000
 	nr_epochs = None
-	hidden_units = [400, 400, 400, 400] # [10, 10] [400, 400] [400, 400, 400, 400]
+	hidden_units = [800, 800] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'T_CHASSIS'
 	
 	label_path = 'Labels/'
@@ -49,9 +49,8 @@ def main(argv):
 	resultfile.write('Choosen label: ' + choosen_label + '\n\r')
 	resultfile.flush()
 	
-	# Label_mapping holds key value pairs where key is truck_id and value its integer representation
-	#label_mapping = dataloader.get_data_source_labels(data_path) # All labels from data source files
-	label_mapping = dataloader.get_valid_labels(label_path) # Labels from labels file only
+	# Label_mapping holds key value pairs where key is the label and value its integer representation
+	label_mapping = dataloader.get_valid_labels(label_path, choosen_label) # Labels from labels file only
 	
 	#Get three structured separate dataframes from data sources
 	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
@@ -83,8 +82,6 @@ def main(argv):
 		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping))
 	#classifier = tensorflow.estimator.DNNClassifier \
 	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Volvo_model')
-	
-	#classifier = tensorflow.estimator.DNNClassifier(feature_columns=my_feature_columns,hidden_units=[10, 10],n_classes=int_labels.size)
 	
     ### Train the Model.
 	print('\nModel training\n\r\n\r\n')
@@ -124,7 +121,7 @@ def main(argv):
 	
 if __name__ == '__main__':
     tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
-    tensorflow.app.run(main('Data/'))
+    tensorflow.app.run(main('Data/')) # So far only a dummy argument...
 	
 	
 	
