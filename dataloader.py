@@ -378,5 +378,5 @@ def add_labels_to_structure(structure_directory, labels_directory):
 #loadData('Compressed/', True)
 
 #add_labels_to_structure('Compressed/Compressed_single/', 'Labels/')
-add_labels_to_structure('Compressed/Compressed_valid_chassis/', 'Labels/')
+#add_labels_to_structure('Compressed/Compressed_valid_chassis/', 'Labels/')
 
