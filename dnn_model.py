@@ -30,14 +30,14 @@ def main(argv):
 	"""
 	
 	batch_size = 100 # 100
-	train_steps = 100000 # 1000
+	train_steps = 1000 # 1000
 	nr_epochs = None
-	hidden_units = [800, 800] # [10, 10] [400, 400] [400, 400, 400, 400]
+	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'T_CHASSIS'
 	
 	label_path = 'Labels/'
-	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
-	structured_data_path = 'Compressed/' # 'Compressed_valid'
+	data_path = 'Testdata/' # 'Data_original/' 'Testdata/'
+	structured_data_path = 'Compressed/' # 'Compressed_valid_chassis'
 	
 	resultfile = open("Results/model_results.txt", "a")
 	
