@@ -11,35 +11,49 @@ import argparse
 from os import listdir
 from os.path import isfile, join
 import datetime
+import sys
 
 import dataloader
 
-"""
+
+
 parser = argparse.ArgumentParser()
+
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
-parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
+
 """
+parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
+parser.add_argument('--hidden_units', default=[10,10], type=list, help='layout for hidden layers')
+parser.add_argument('--nr_epochs', default=None, type=int, help='number of epochs')
+parser.add_argument('--choosen_label', default=T_CHASSIS, type=string, help='the label to train and evaluate')
+parser.add_argument('--label_path', default=Labels/, type=string, help='where one labels file is located')
+parser.add_argument('--data_path', default=Data_original/, type=string, help='path to data source files')
+parser.add_argument('--structured_data_path', default=Compressed/, type=string, help='the path to one strutured data file')
+parser.add_argument('--compressed', default=True, type=boolean, help='if true structured data will be used, false means data source files')
+"""
+
 
 def main(argv):
 
-	"""
-	args = parser.parse_args(argv)
-	#args = parser.parse_args(argv[1:])
-	print(args)
-	return
-	"""
+	args = parser.parse_args(argv[1:]) # argv[1:] argv
+	#parser.print_help()
+	#print(args)
+	#sys.exit()
 	
-	batch_size = 100 # 100
+	batch_size = args.batch_size # 100
+	print('Batch_size: ' + str(batch_size))
 	train_steps = 1000 # 1000
 	nr_epochs = None
 	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'T_CHASSIS'
 	
 	label_path = 'Labels/'
-	data_path = 'Testdata/' # 'Data_original/' 'Testdata/'
-	structured_data_path = 'Compressed/' # 'Compressed_valid_chassis'
+	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
+	structured_data_path = 'Compressed/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
 	
-	resultfile = open("Results/model_results.txt", "a")
+	#sys.exit()
+	
+	resultfile = open("Results/model_results.txt", "w")
 	
 	resultfile.write('\n\rModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\r')
 	resultfile.write('Layer setting: ' + str(hidden_units) + '\n\r')
@@ -73,11 +87,14 @@ def main(argv):
 	for key in trainset.keys():
 		my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
 
-	# opt = GradientDescentOptimizer(learning_rate=0.1) ??	
+	
 		
 	# The model must choose between x classes.
 	print('Number of unique trucks, n_classes: ' + str(len(label_mapping)))
 	#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
+	
+	# opt = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ??	
+	
 	classifier = tensorflow.estimator.DNNClassifier \
 		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping))
 	#classifier = tensorflow.estimator.DNNClassifier \
@@ -116,12 +133,12 @@ def main(argv):
 			predictfile.write('Percent: ' + str(100 * probability) + ' T_CHASSIS: ' + str(expec) + '\n\r')
 	
 	resultfile.write('\n\r******************************\n\r')
-	
+	resultfile..close()
 	
 	
 if __name__ == '__main__':
     tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
-    tensorflow.app.run(main('Data/')) # So far only a dummy argument...
+    tensorflow.app.run(main) # So far only a dummy argument...
 	
 	
 	

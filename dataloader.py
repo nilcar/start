@@ -21,14 +21,14 @@ If compressed is False; data will be read from csv source files and then structu
 labelmapping should been done before outside this function and come as an filled dictionary
 """
 
-def loadData(directory, compressed_data=False, label_mapping = []):
+def loadData(directory, compressed_data=False, label_mapping = {}):
 
 	truck_type = 'truck'
 	truck_id = 'T_CHASSIS'
 	truck_date = 'truck_date'
 	index_tuple = (truck_type, truck_id, truck_date)
 	
-	resultfile = open("Results/model_statistics.txt", "a")
+	resultfile = open("Results/model_statistics.txt", "w")
 	
 	if compressed_data:
 		directory = 'Compressed/'
@@ -58,8 +58,9 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 			nr += 1
 	else:
 		# Read already structured data
-		csv_data = pandas.read_csv(datafiles[0], sep=";", index_col=False)
-		# Remove data where truck_id isn't in label_mapping
+		for datafile in datafiles:
+			csv_data = pandas.read_csv(datafile, sep=";", index_col=False)
+
 		
 	print('Csv data from file')
 	print(csv_data.head(10))
@@ -185,6 +186,7 @@ def loadData(directory, compressed_data=False, label_mapping = []):
 	print(validationset.head())
 	print(validationset.size)
 	"""
+	resultfile.close()
 	
 	return trainset, testset, validationset
 	
@@ -226,7 +228,6 @@ def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 				
 			#print(new_label)
 				
-		
 	#int_labels.reset_index()
 	print('int labels size:' + str(int_labels.size))
 	#print(int_labels)
@@ -331,28 +332,10 @@ def add_labels_to_structure(structure_directory, labels_directory):
 		# Loop through label_data and fill the structure with new label@ 'T_CHASSIS', labelnames
 		for index_sd, row_sd in structured_data.iterrows():
 			if labelname != 'T_CHASSIS':
-				#value = label_data.loc[(index_sd, labelname)]
 				structured_data.loc[(index_sd, labelname)] = label_data.loc[(index_sd, labelname)]
-				# dataframe.loc[(index1, index2, index3), :] = numpy.nan
 	
-	structured_data = structured_data.reset_index()	
-		
-	"""
-	# New columns with empty label values
-	for labelname in label_data.columns:
-		if str(labelname) != 'T_CHASSIS':
-			structured_data[labelname] = ''
-	
-	# Loop through label_data and fill the structure with new label@ 'T_CHASSIS', labelnames
-		for index_ld, row_ld in label_data.iterrows():
-			for index_sd, row_sd in structured_data.iterrows():
-				for labelname in label_data.columns:
-					if str(labelname) != 'T_CHASSIS':
-						if row_ld['T_CHASSIS'] == row_sd['T_CHASSIS']:
-							row_sd[labelname] = row_ld[labelname]
-	"""						
+	structured_data = structured_data.reset_index()			
 							
-	
 	print(structured_data.head(10))
 	
 	print('Saving frame data to csv file...\n')
