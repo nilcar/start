@@ -10,6 +10,7 @@ import sys
 from sklearn.model_selection import train_test_split
 import tensorflow
 from collections import OrderedDict
+#import mysql.connector
 #from tensorflow.python.data import Dataset
 
 
@@ -29,6 +30,9 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 	index_tuple = (truck_type, truck_id, truck_date)
 	
 	resultfile = open("Results/model_statistics.txt", "w")
+	
+	doubles_dict = {}
+	found_doubles = {}
 	
 	if compressed_data:
 		directory = 'Compressed/'
@@ -98,16 +102,23 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 				column = str(row['x_index']) + '_' + str(row['y_index'])
 				value = row['value']
 				
+				
+				# Code to be used only once...
+				# Look for double entries in the source data
+				key = index1 + ':' +  index2 + ':' +  index3 + '#' +  column
+				try:
+					value = doubles_dict[key]
+					found_doubles[key] = value
+				except KeyError:
+					doubles_dict[key] = value
+				
+				
 				try: 
 					# insert value if indexed row exist
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
-					# Add engine and country here...
-					
 				except KeyError:
 					dataframe.loc[(index1, index2, index3), :] = numpy.nan # Inserts a row with default NaN in each x,y column
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
-					# Add engine and country here...
-					
 				accepted_labels += 1
 			except KeyError:
 				# Source label did not exist 
@@ -116,6 +127,17 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 	else:
 		dataframe = csv_data.set_index(list(index_tuple))
 		#print(dataframe.head())
+		
+	# Code to be used only once...
+	doublesframe = pandas.DataFrame()
+	#dataframe['Chassi_nr'] = []
+	#dataframe['Int_label'] = []
+	doublesframe['Key'] = found_doubles.keys()
+	doublesframe['Int_label'] = found_doubles.values()
+	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
+	datestring = datestring.replace(':', '-')
+	doublesframe.to_csv('volvo_doubles' + datestring + '.csv', sep=';', index = False, index_label = False)	
+		
 		
 	if not(compressed_data):	
 		print('Total number of labels: ' + str(accepted_labels + invalid_labels))

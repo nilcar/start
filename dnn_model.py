@@ -23,13 +23,12 @@ parser.add_argument('--batch_size', default=100, type=int, help='batch size')
 
 """
 parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
-parser.add_argument('--hidden_units', default=[10,10], type=list, help='layout for hidden layers')
+parser.add_argument('--hidden_units', default=[10,10], type=string, help='layout for hidden layers')
 parser.add_argument('--nr_epochs', default=None, type=int, help='number of epochs')
 parser.add_argument('--choosen_label', default=T_CHASSIS, type=string, help='the label to train and evaluate')
 parser.add_argument('--label_path', default=Labels/, type=string, help='where one labels file is located')
-parser.add_argument('--data_path', default=Data_original/, type=string, help='path to data source files')
-parser.add_argument('--structured_data_path', default=Compressed/, type=string, help='the path to one strutured data file')
-parser.add_argument('--compressed', default=True, type=boolean, help='if true structured data will be used, false means data source files')
+parser.add_argument('--data_path', default=Data_original/, type=string, help='path to data source files or compressed file')
+parser.add_argument('--compressed', default=True, type=boolean, help='if true structured data will be used, false means data source files and a structured file will be produced')
 """
 
 
@@ -41,7 +40,7 @@ def main(argv):
 	#sys.exit()
 	
 	batch_size = args.batch_size # 100
-	print('Batch_size: ' + str(batch_size))
+	#print('Batch_size: ' + str(batch_size))
 	train_steps = 1000 # 1000
 	nr_epochs = None
 	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
@@ -67,8 +66,8 @@ def main(argv):
 	label_mapping = dataloader.get_valid_labels(label_path, choosen_label) # Labels from labels file only
 	
 	#Get three structured separate dataframes from data sources
-	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
-	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping)
+	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
+	#trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping)
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = \
@@ -133,12 +132,12 @@ def main(argv):
 			predictfile.write('Percent: ' + str(100 * probability) + ' T_CHASSIS: ' + str(expec) + '\n\r')
 	
 	resultfile.write('\n\r******************************\n\r')
-	resultfile..close()
+	resultfile.close()
 	
 	
 if __name__ == '__main__':
     tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
-    tensorflow.app.run(main) # So far only a dummy argument...
+    tensorflow.app.run(main) # So far only a dummy arguments...
 	
 	
 	

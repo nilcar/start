@@ -77,10 +77,11 @@ def labels_statistics(directory):
 
 def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 
-	resultfile = open("Histograms/statistics_results.txt", "w")
+	resultfile = open("Histograms/statistics_results.txt", "a")
 
 	zero_values = 'with zero values'
 	upper_limit_info = ''
+	upper_limit_file = ''
 	
 	datafiles = []
 	for item in listdir(directory): 
@@ -91,8 +92,34 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 	dataframe = dataframe.loc[:, '1_1':'20_20']
 	#print(dataframe.head(10))
 
+	"""
+	# NaN statistics
+	# For column
+	number_of_nan_values = pandas.Series()
+	for x in range(1, 21):
+		for y in range(1, 21):
+			number_of_nan = 0
+			column = str(x) + '_' + str(y)
+			values = dataframe.loc[:,column]
+			for value in values:
+				if math.isnan(value):
+					number_of_nan += 1
+			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
+	# For row
+	number_of_nan_values_row = pandas.Series()
+	for index, row in dataframe.iterrows():
+		number_of_nan_row = 0
+		for x in range(1, 21):
+			for y in range(1, 21):
+				value = row[str(x) + '_' + str(y)]
+				if math.isnan(value):
+					number_of_nan_row += 1
+		number_of_nan_values_row= number_of_nan_values_row.append(pandas.Series([number_of_nan_row]), ignore_index=True)
+	"""
+	
 	if upper_limit > 0:
-		upper_limit_info = ' Upper limit: ' + str(upper_limit)
+		upper_limit_info = ' Upper_limit: ' + str(upper_limit)
+		upper_limit_file = ' Upper_limit'
 		for index, row in dataframe.iterrows():
 			for x in range(1, 21):
 				for y in range(1, 21):
@@ -100,26 +127,46 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 					if value > upper_limit:
 						row[str(x) + '_' + str(y)] = numpy.nan
 						#print(row[str(x) + '_' + str(y)])
-	
-	
+				
 	#print(dataframe.head(10))
 	
 	if zero_values_excluded:
 		dataframe = dataframe.replace(0.0, numpy.nan)
 		zero_values = 'without zero values'
-		
+	
+	# NaN statistics
+	# For column
+	number_of_nan_values = pandas.Series()
+	for x in range(1, 21):
+		for y in range(1, 21):
+			number_of_nan = 0
+			column = str(x) + '_' + str(y)
+			values = dataframe.loc[:,column]
+			for value in values:
+				if math.isnan(value):
+					number_of_nan += 1
+			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
+	# For row
+	number_of_nan_values_row = pandas.Series()
+	for index, row in dataframe.iterrows():
+		number_of_nan_row = 0
+		for x in range(1, 21):
+			for y in range(1, 21):
+				value = row[str(x) + '_' + str(y)]
+				if math.isnan(value):
+					number_of_nan_row += 1
+		number_of_nan_values_row= number_of_nan_values_row.append(pandas.Series([number_of_nan_row]), ignore_index=True)
+	
+
 	min_values = pandas.Series()
 	max_values = pandas.Series()
 	mean_values = pandas.Series()
 	std_values = pandas.Series()
 	std3_values = pandas.Series()
-	
 	std_over_mean_values = pandas.Series()
 	std2_over_mean_values = pandas.Series()
 	std3_over_mean_values = pandas.Series()
 	std5_over_mean_values = pandas.Series()
-	number_of_nan_values = pandas.Series()
-	
 	column_values = pandas.Series()
 	for x in range(1, 21):
 		for y in range(1, 21):
@@ -159,9 +206,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 					number_over_mean_std3 += 1
 				if difference_from_mean > std5:
 					number_over_mean_std5 += 1
-	
 			
-			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
 			std3_values = std3_values.append(pandas.Series([number_over_std3]), ignore_index=True)
 			std_over_mean_values = std_over_mean_values.append(pandas.Series([number_over_mean_std]), ignore_index=True)
 			std2_over_mean_values = std2_over_mean_values.append(pandas.Series([number_over_mean_std2]), ignore_index=True)
@@ -192,88 +237,96 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 	resultfile.write('Std value: ' + zero_values + ': ' + str(value_std) + '\n\r')
 	resultfile.write('Over 3 std value: ' + zero_values + ': ' + str(number_over_std3) + '\n\r')
 	
-	number_of_nan_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
-	plt.title("Number of NaN values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	number_of_nan_values_row.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values row " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Number_of_NaN_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Number_of_NaN_values_row-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	number_of_nan_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values column " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Number_of_NaN_values_column-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	
 	mean_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Mean_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Mean_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 		
 	min_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Min values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Min_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Min_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	
 	max_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Max values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Max_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Max_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	
 	std_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Standard deviation values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Std_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Std_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	
 	std3_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Standard deviation times 3 values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Std3_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Std3_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	#plt.show()
 	
 	std_over_mean_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Standard deviation over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Std_over_mean_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Std_over_mean_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	#plt.show()
 	
 	std2_over_mean_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Standard deviation 2 over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Std2_over_mean_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Std2_over_mean_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	#plt.show()
 	
 	std3_over_mean_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Standard deviation 3 over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Std3_over_mean_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Std3_over_mean_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	#plt.show()
 	
 	std5_over_mean_values.plot(kind='hist', bins=40)
-	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,y1,400))
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
 	plt.title("Standard deviation 5 over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
-	plt.savefig("Histograms/Std5_over_mean_values-" + zero_values + ".png")
+	plt.savefig("Histograms/Std5_over_mean_values-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	#plt.show()
 	
@@ -284,11 +337,19 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 	resultfile.close()
 
 	return
-	
+
+
+column_statistics('Compressed/Compressed_valid_chassis/', False) # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/Compressed_valid_chassis/', True) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/Compressed_valid_chassis/', False, 3000) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/Compressed_valid_chassis/', True, 3000) # Compressed_single Compressed_valid_chassis
 
-#column_statistics('Compressed/', False, 3000) # Compressed_single Compressed_valid_chassis	
+"""
+column_statistics('Compressed/', False) # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/', True) # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/', False, 3000) # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/', True, 3000) # Compressed_single Compressed_valid_chassis
+"""
 
 		
 #labels_statistics('Data_original/')
