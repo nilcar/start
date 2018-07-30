@@ -134,6 +134,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 		dataframe = dataframe.replace(0.0, numpy.nan)
 		zero_values = 'without zero values'
 	
+	"""
 	# NaN statistics
 	# For column
 	number_of_nan_values = pandas.Series()
@@ -146,6 +147,8 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 				if math.isnan(value):
 					number_of_nan += 1
 			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
+	"""
+	
 	# For row
 	number_of_nan_values_row = pandas.Series()
 	for index, row in dataframe.iterrows():
@@ -157,7 +160,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 					number_of_nan_row += 1
 		number_of_nan_values_row= number_of_nan_values_row.append(pandas.Series([number_of_nan_row]), ignore_index=True)
 	
-
+	number_of_nan_values = pandas.Series()
 	min_values = pandas.Series()
 	max_values = pandas.Series()
 	mean_values = pandas.Series()
@@ -207,6 +210,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 				if difference_from_mean > std5:
 					number_over_mean_std5 += 1
 			
+			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
 			std3_values = std3_values.append(pandas.Series([number_over_std3]), ignore_index=True)
 			std_over_mean_values = std_over_mean_values.append(pandas.Series([number_over_mean_std]), ignore_index=True)
 			std2_over_mean_values = std2_over_mean_values.append(pandas.Series([number_over_mean_std2]), ignore_index=True)

@@ -22,7 +22,7 @@ If compressed is False; data will be read from csv source files and then structu
 labelmapping should been done before outside this function and come as an filled dictionary
 """
 
-def loadData(directory, compressed_data=False, label_mapping = {}):
+def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan = 0):
 
 	truck_type = 'truck'
 	truck_id = 'T_CHASSIS'
@@ -34,8 +34,10 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 	doubles_dict = {}
 	found_doubles = {}
 	
+	"""
 	if compressed_data:
 		directory = 'Compressed/'
+	"""	
 	
 	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
 	
@@ -82,8 +84,8 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 		dataframe[truck_id] = []
 		dataframe[truck_date] = []
 		print('Building struture and fill it with data\n')
-		for x in range(1, 21):
-			for y in range(1, 21):
+		for y in range(1, 21):
+			for x in range(1, 21):
 				dataframe[str(x) + '_' + str(y)] = []
 			
 		dataframe = dataframe.set_index(list(index_tuple))
@@ -102,7 +104,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 				column = str(row['x_index']) + '_' + str(row['y_index'])
 				value = row['value']
 				
-				
+				"""
 				# Code to be used only once...
 				# Look for double entries in the source data
 				key = index1 + ':' +  index2 + ':' +  index3 + '#' +  column
@@ -111,7 +113,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 					found_doubles[key] = value
 				except KeyError:
 					doubles_dict[key] = value
-				
+				"""
 				
 				try: 
 					# insert value if indexed row exist
@@ -128,16 +130,16 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 		dataframe = csv_data.set_index(list(index_tuple))
 		#print(dataframe.head())
 		
+	
+	"""
 	# Code to be used only once...
 	doublesframe = pandas.DataFrame()
-	#dataframe['Chassi_nr'] = []
-	#dataframe['Int_label'] = []
 	doublesframe['Key'] = found_doubles.keys()
 	doublesframe['Int_label'] = found_doubles.values()
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
 	doublesframe.to_csv('volvo_doubles' + datestring + '.csv', sep=';', index = False, index_label = False)	
-		
+	"""	
 		
 	if not(compressed_data):	
 		print('Total number of labels: ' + str(accepted_labels + invalid_labels))
@@ -148,47 +150,18 @@ def loadData(directory, compressed_data=False, label_mapping = {}):
 	
 	print('Structured data')
 	print(dataframe.head(10))
+	
 	print('Size of dataframe data with Nan:' + str(dataframe.size))
-	
-	# Check for rows with valid numbers of NaN...
-	numbers_of_nan = 0 # Max 400
-	#for index, row in dataframe.iterrows():		
-		# Some looping... 
-			
-		# delete row that is invalid due to nr of NaN
-		#dataframe.drop(index)
-			
-	# continue # Check nest row instead
-	
-	
-	#print('Size of dataframe data after criteria for NaN exclusion(' + str(numbers_of_nan) +  ')' + str(dataframe.size))
-	
-	
-	# This is the place to find the amount of NaN...
-	nr_of_nan = 0
-	nr_of_numbers = 0
-	for index, row in dataframe.iterrows():
-		for x in range(1, 21):
-			for y in range(1, 21):
-				if math.isnan(row[str(x) + '_' + str(y)]):
-					nr_of_nan += 1
-				else:
-					nr_of_numbers += 1
-	
-	nan_percent = 100 * nr_of_nan / (nr_of_nan + nr_of_numbers)
-	print('Numbers: ' + str(nr_of_numbers))
-	print('Nan: ' + str(nr_of_nan))
-	print('Nan in percent: ' + str(nan_percent))
-	resultfile.write('\n\rNumbers: ' + str(nr_of_numbers))
-	resultfile.write('\n\rNan: ' + str(nr_of_nan))
-	resultfile.write('\n\rNan in percent: ' + str(nan_percent))
-	
 	if not(compressed_data):
 		print('Saving frame data to csv file...\n')
 		datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 		datestring = datestring.replace(':', '-')
 		#print(dataframe.head())
 		dataframe.to_csv('Compressed/volvo_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
+
+	dataframe = nan_statistics(dataframe)
+	dataframe = exclude_rows_with_nan(dataframe, max_nr_of_nan)
+	print('Size of dataframe where Nan rows excluded:' + str(dataframe.size))
 	
 	dataframe = dataframe.fillna(value = 0.0) # inplace = True
 	print('After filling')
@@ -324,6 +297,63 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 	return	label_mapping
 			
 	
+	
+def exclude_rows_with_nan(dataframe, max_nr_of_nan = 0):
+
+	#Check for rows with invalid numbers of NaN and delete them...
+	
+	nr_of_rows = 0
+	nr_of_rows_deleted = 0
+	delete_rows = []
+	for index, row in dataframe.iterrows():		
+		nr_of_nan = 0
+		for x in range(1, 21):
+			for y in range(1, 21):
+				value = row[str(x) + '_' + str(y)]
+				if math.isnan(value):
+					nr_of_nan += 1
+		if nr_of_nan > max_nr_of_nan:
+			#print(str(nr_of_nan) + ' Index: ' + str(index))
+			nr_of_rows_deleted += 1
+			delete_rows.append(index)
+			#print('Appending: ' + str(index))
+		nr_of_rows += 1	
+			
+	#print(delete_rows)
+	dataframe = dataframe.drop(delete_rows)
+	print('Number of deleted rows: ' + str(nr_of_rows_deleted) + ' of rows total: ' + str(nr_of_rows))
+	
+	return dataframe
+
+
+def nan_statistics(dataframe):
+
+	# This is the place to find the amount of NaN...
+	nr_of_nan = 0
+	nr_of_numbers = 0
+	for index, row in dataframe.iterrows():
+		for x in range(1, 21):
+			for y in range(1, 21):
+				if math.isnan(row[str(x) + '_' + str(y)]):
+					nr_of_nan += 1
+				else:
+					nr_of_numbers += 1
+	
+	nan_percent = 100 * nr_of_nan / (nr_of_nan + nr_of_numbers)
+	print('Numbers: ' + str(nr_of_numbers))
+	print('Nan: ' + str(nr_of_nan))
+	print('Nan in percent: ' + str(nan_percent))
+	resultfile = open("Results/model_statistics.txt", "a")
+	resultfile.write('\n\rNumbers: ' + str(nr_of_numbers))
+	resultfile.write('\n\rNan: ' + str(nr_of_nan))
+	resultfile.write('\n\rNan in percent: ' + str(nan_percent))	
+	
+	return dataframe
+	
+	
+	
+	
+	
 	# Adds labels to the structure as a new columns in the structured dataframe and saves it to a file
 	# This combines the data in the "structured datasources" and the data in the labels file.
 def add_labels_to_structure(structure_directory, labels_directory):
@@ -342,7 +372,7 @@ def add_labels_to_structure(structure_directory, labels_directory):
 		if isfile(join(labels_directory, item)):
 			labelfiles.append(labels_directory + item)
 	for datafile in labelfiles:
-		label_data = pandas.read_csv(datafile, sep=";", index_col=False)
+		label_data = pandas.read_csv(datafile, sep=";", index_col=False, keep_default_na=False)
 
 		
 	structured_data = structured_data.set_index('T_CHASSIS')
@@ -354,7 +384,10 @@ def add_labels_to_structure(structure_directory, labels_directory):
 		# Loop through label_data and fill the structure with new label@ 'T_CHASSIS', labelnames
 		for index_sd, row_sd in structured_data.iterrows():
 			if labelname != 'T_CHASSIS':
-				structured_data.loc[(index_sd, labelname)] = label_data.loc[(index_sd, labelname)]
+				value = label_data.loc[(index_sd, labelname)]
+				if value == '':
+					value = 'undefined'
+				structured_data.loc[(index_sd, labelname)] = value
 	
 	structured_data = structured_data.reset_index()			
 							
@@ -375,6 +408,6 @@ def add_labels_to_structure(structure_directory, labels_directory):
 #loadData('Data_original/', False)
 #loadData('Compressed/', True)
 
-#add_labels_to_structure('Compressed/Compressed_single/', 'Labels/')
+#add_labels_to_structure('Compressed/', 'Labels/')
 #add_labels_to_structure('Compressed/Compressed_valid_chassis/', 'Labels/')
 

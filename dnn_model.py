@@ -45,6 +45,7 @@ def main(argv):
 	nr_epochs = None
 	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'T_CHASSIS'
+	max_nr_nan = 380
 	
 	label_path = 'Labels/'
 	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
@@ -66,8 +67,10 @@ def main(argv):
 	label_mapping = dataloader.get_valid_labels(label_path, choosen_label) # Labels from labels file only
 	
 	#Get three structured separate dataframes from data sources
-	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping)
-	#trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping)
+	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan)
+	#trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan)
+	
+	return
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = \
@@ -86,13 +89,14 @@ def main(argv):
 	for key in trainset.keys():
 		my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
 
-	
-		
 	# The model must choose between x classes.
 	print('Number of unique trucks, n_classes: ' + str(len(label_mapping)))
 	#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
 	
-	# opt = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ??	
+	# optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ?
+	# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
+	# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
+	# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
 	
 	classifier = tensorflow.estimator.DNNClassifier \
 		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping))
