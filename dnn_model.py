@@ -29,6 +29,8 @@ parser.add_argument('--choosen_label', default=T_CHASSIS, type=string, help='the
 parser.add_argument('--label_path', default=Labels/, type=string, help='where one labels file is located')
 parser.add_argument('--data_path', default=Data_original/, type=string, help='path to data source files or compressed file')
 parser.add_argument('--compressed', default=True, type=boolean, help='if true structured data will be used, false means data source files and a structured file will be produced')
+parser.add_argument('--max_nr_nan', default=0, type=int, help='number of nan per row for exclusion')
+parser.add_argument('--fixed_sdelection', default=True, type=boolean, help='If true selection is done by truck_date')
 """
 
 
@@ -45,7 +47,8 @@ def main(argv):
 	nr_epochs = None
 	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'T_CHASSIS'
-	max_nr_nan = 380
+	max_nr_nan = 0
+	fixed_sdelection = False
 	
 	label_path = 'Labels/'
 	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
@@ -67,10 +70,8 @@ def main(argv):
 	label_mapping = dataloader.get_valid_labels(label_path, choosen_label) # Labels from labels file only
 	
 	#Get three structured separate dataframes from data sources
-	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan)
-	#trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan)
-	
-	return
+	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan, fixed_sdelection)
+	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan, fixed_sdelection)
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = \
