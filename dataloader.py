@@ -22,7 +22,7 @@ If compressed is False; data will be read from csv source files and then structu
 labelmapping should been done before outside this function and come as an filled dictionary
 """
 
-def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan = 0):
+def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan = 0, fixed_selection = True):
 
 	truck_type = 'truck'
 	truck_id = 'T_CHASSIS'
@@ -33,11 +33,6 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	
 	doubles_dict = {}
 	found_doubles = {}
-	
-	"""
-	if compressed_data:
-		directory = 'Compressed/'
-	"""	
 	
 	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
 	
@@ -160,6 +155,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		dataframe.to_csv('Compressed/volvo_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
 
 	dataframe = nan_statistics(dataframe)
+	
 	dataframe = exclude_rows_with_nan(dataframe, max_nr_of_nan)
 	print('Size of dataframe where Nan rows excluded:' + str(dataframe.size))
 	
@@ -167,10 +163,30 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	print('After filling')
 	print(dataframe.head(10))
 	
-	#trainset, testset = train_test_split(dataframe, test_size=0.4)
-	#testset, validationset = train_test_split(testset, test_size=0.5)
-	trainset, testset = train_test_split(dataframe, test_size=0.1)
-	testset, validationset = train_test_split(testset, test_size=0.5)
+	if fixed_selection:
+		trainmask = (dataframe['truck_date'] > '2016-01-01') & (dataframe['truck_date'] <= '2017-06-30') 
+		trainset = dataframe.loc[trainmask]
+
+		print('Trainset:')
+		print(trainset.head())
+		
+		testmask = (dataframe['truck_date'] > '2017-07-01') & (dataframe['truck_date'] <= '2017-12-31') 
+		testset = dataframe.loc[testmask]
+
+		print('Testset:')
+		print(testset.head())
+		
+		validationmask = (dataframe['truck_date'] > '2018-01-01') & (dataframe['truck_date'] <= '2018-12-31') 
+		validationset = dataframe.loc[validationmask]
+
+		print('Validationset:')
+		print(validationset.head())
+	
+	else:
+		#trainset, testset = train_test_split(dataframe, test_size=0.4)
+		#testset, validationset = train_test_split(testset, test_size=0.5)
+		trainset, testset = train_test_split(dataframe, test_size=0.1)
+		testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
 	
 	"""
@@ -239,8 +255,16 @@ def train_input_fn(features, labels, batch_size, nr_epochs):
 	dataset = dataset.repeat(nr_epochs).batch(batch_size)
 	#ds = ds.batch(batch_size).repeat(num_epochs) # num_epochs ?
 	
-	# Return the dataset.
-	return dataset
+	version_full = tensorflow.__version__
+	x, version, y = version_full.split('.')
+	print('Versionfull: ' + version_full)
+	print('Version: ' + version)
+	
+	if version >= '5':
+		# Return the dataset.
+		return dataset
+	else:
+		return dataset.make_one_shot_iterator().get_next() #for 1.4
 
 
 def eval_input_fn(features, labels, batch_size):
@@ -259,9 +283,20 @@ def eval_input_fn(features, labels, batch_size):
     assert batch_size is not None, "batch_size must not be None"
     dataset = dataset.batch(batch_size)
 
-    # Return the dataset.
-    return dataset
+	version_full = tensorflow.__version__
+	x, version, y = version_full.split('.')
+	print('Versionfull: ' + version_full)
+	print('Version: ' + version)
+	
+	if version >= '5':
+		# Return the dataset.
+		return dataset
+	else:
+		return dataset.make_one_shot_iterator().get_next() #for 1.4
 
+		
+		
+		
 	# Get label_mapping dictionary for choosen label
 def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):	
 	
@@ -312,7 +347,7 @@ def exclude_rows_with_nan(dataframe, max_nr_of_nan = 0):
 				value = row[str(x) + '_' + str(y)]
 				if math.isnan(value):
 					nr_of_nan += 1
-		if nr_of_nan > max_nr_of_nan:
+		if nr_of_nan > max_nr_of_nan and max_nr_of_nan > 0:
 			#print(str(nr_of_nan) + ' Index: ' + str(index))
 			nr_of_rows_deleted += 1
 			delete_rows.append(index)
@@ -320,7 +355,8 @@ def exclude_rows_with_nan(dataframe, max_nr_of_nan = 0):
 		nr_of_rows += 1	
 			
 	#print(delete_rows)
-	dataframe = dataframe.drop(delete_rows)
+	if nr_of_rows_deleted > 0:
+		dataframe = dataframe.drop(delete_rows)
 	print('Number of deleted rows: ' + str(nr_of_rows_deleted) + ' of rows total: ' + str(nr_of_rows))
 	
 	return dataframe
