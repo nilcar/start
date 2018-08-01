@@ -99,17 +99,6 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 				column = str(row['x_index']) + '_' + str(row['y_index'])
 				value = row['value']
 				
-				"""
-				# Code to be used only once...
-				# Look for double entries in the source data
-				key = index1 + ':' +  index2 + ':' +  index3 + '#' +  column
-				try:
-					value = doubles_dict[key]
-					found_doubles[key] = value
-				except KeyError:
-					doubles_dict[key] = value
-				"""
-				
 				try: 
 					# insert value if indexed row exist
 					dataframe.loc[(index1, index2, index3), :].at[column] = value
@@ -124,17 +113,6 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	else:
 		dataframe = csv_data.set_index(list(index_tuple))
 		#print(dataframe.head())
-		
-	
-	"""
-	# Code to be used only once...
-	doublesframe = pandas.DataFrame()
-	doublesframe['Key'] = found_doubles.keys()
-	doublesframe['Int_label'] = found_doubles.values()
-	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
-	datestring = datestring.replace(':', '-')
-	doublesframe.to_csv('volvo_doubles' + datestring + '.csv', sep=';', index = False, index_label = False)	
-	"""	
 		
 	if not(compressed_data):	
 		print('Total number of labels: ' + str(accepted_labels + invalid_labels))
@@ -268,21 +246,21 @@ def train_input_fn(features, labels, batch_size, nr_epochs):
 
 
 def eval_input_fn(features, labels, batch_size):
-    """An input function for evaluation or prediction"""
-    features=dict(features)
-    if labels is None:
-        # No labels, use only features.
-        inputs = features
-    else:
-        inputs = (features, labels)
+	"""An input function for evaluation or prediction"""
+	features=dict(features)
+	if labels is None:
+		# No labels, use only features.
+		inputs = features
+	else:
+		inputs = (features, labels)
 
-    # Convert the inputs to a Dataset.
-    dataset = tensorflow.data.Dataset.from_tensor_slices(inputs)
+	# Convert the inputs to a Dataset.
+	dataset = tensorflow.data.Dataset.from_tensor_slices(inputs)
 
-    # Batch the examples
-    assert batch_size is not None, "batch_size must not be None"
-    dataset = dataset.batch(batch_size)
-
+	# Batch the examples
+	assert batch_size is not None, "batch_size must not be None"
+	dataset = dataset.batch(batch_size)
+	
 	version_full = tensorflow.__version__
 	x, version, y = version_full.split('.')
 	print('Versionfull: ' + version_full)

@@ -42,7 +42,9 @@ def get_doubles(directory):
 			key = index1 + ':' +  index2 + ':' +  index3 + '#' +  column
 			try:
 				valuefirst = doubles_dict[key]
-				found_doubles[key] = valuefirst + '#' + str(value) + ':' + str(row_nr) + ':' + datafile
+				org_value, org_row, orgfile = valuefirst.split(':')
+				if org_value != str(value):
+					found_doubles[key] = valuefirst + '#' + str(value) + ':' + str(row_nr) + ':' + datafile
 			except KeyError:
 				doubles_dict[key] = str(value) + ':' + str(row_nr) + ':' + datafile
 			row_nr += 1
@@ -52,7 +54,7 @@ def get_doubles(directory):
 	doublesframe['first#double'] = found_doubles.values()
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	doublesframe.to_csv('volvo_doubles' + datestring + '.csv', sep=';', index = False, index_label = False)	
+	doublesframe.to_csv('volvo_doubles_different_values' + datestring + '.csv', sep=';', index = False, index_label = False)	
 
 
 get_doubles('Data_original/') # 'Testdata/' 'Data_original/'

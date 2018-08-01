@@ -48,7 +48,7 @@ def main(argv):
 	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'T_CHASSIS'
 	max_nr_nan = 0
-	fixed_sdelection = False
+	fixed_selection = False
 	
 	label_path = 'Labels/'
 	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
@@ -71,7 +71,7 @@ def main(argv):
 	
 	#Get three structured separate dataframes from data sources
 	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan, fixed_sdelection)
-	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan, fixed_sdelection)
+	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan, fixed_selection)
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = \
@@ -138,7 +138,7 @@ def main(argv):
 	
 	resultfile.write('\n\r******************************\n\r')
 	resultfile.close()
-	
+	predictfile.close()
 	
 if __name__ == '__main__':
     tensorflow.logging.set_verbosity(tensorflow.logging.INFO)

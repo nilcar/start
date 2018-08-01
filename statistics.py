@@ -233,7 +233,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 		if value > std3_level:
 			number_over_std3 += 1
 	
-	resultfile.write('For all columns together\n\r')	
+	resultfile.write('For all columns together: ' + zero_values + upper_limit_info + '\n\r')	
 	resultfile.write('Number of values ' + zero_values + ': ' + str(column_values.size) + '\n\r')
 	resultfile.write('Min value ' + zero_values + ': ' + str(value_min) + '\n\r')
 	resultfile.write('Max value ' + zero_values + ': ' + str(value_max) + '\n\r')
@@ -334,8 +334,12 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 	plt.clf()
 	#plt.show()
 	
-	
-	
+	plt.title("mean values(x) std_values(y) " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.scatter(mean_values, std_values, c='r', marker='.') # s=2  (marker size) marker='.' (marker_type)
+	plt.grid(True)
+	plt.savefig("Histograms/scattered_mean_std_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+
 	
 	
 	resultfile.close()
@@ -347,6 +351,7 @@ column_statistics('Compressed/Compressed_valid_chassis/', False) # Compressed_si
 column_statistics('Compressed/Compressed_valid_chassis/', True) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/Compressed_valid_chassis/', False, 3000) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/Compressed_valid_chassis/', True, 3000) # Compressed_single Compressed_valid_chassis
+
 
 """
 column_statistics('Compressed/', False) # Compressed_single Compressed_valid_chassis	
