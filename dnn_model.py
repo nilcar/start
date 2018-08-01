@@ -46,12 +46,12 @@ def main(argv):
 	train_steps = 1000 # 1000
 	nr_epochs = None
 	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
-	choosen_label = 'T_CHASSIS'
+	choosen_label = 'COUNTRY' # 'T_CHASSIS' 'COUNTRY' 'ENGINE_TYPE'
 	max_nr_nan = 0
 	fixed_selection = False
 	
 	label_path = 'Labels/'
-	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
+	data_path = 'Testdata/' # 'Data_original/' 'Testdata/'
 	structured_data_path = 'Compressed/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
 	
 	#sys.exit()
@@ -69,8 +69,9 @@ def main(argv):
 	# Label_mapping holds key value pairs where key is the label and value its integer representation
 	label_mapping = dataloader.get_valid_labels(label_path, choosen_label) # Labels from labels file only
 	
+	
 	#Get three structured separate dataframes from data sources
-	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan, fixed_sdelection)
+	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan, fixed_selection)
 	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan, fixed_selection)
 	
 	# Train model data

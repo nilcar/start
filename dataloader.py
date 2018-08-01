@@ -288,20 +288,23 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 	label_mapping = {}
 	for datafile in datafiles:
 		print(datafile)
-		label_data = pandas.read_csv(datafile, sep=";")
+		label_data = pandas.read_csv(datafile, sep=";", keep_default_na=False)
 		
 		#print('label structure')
 		#print(label_data.head(10))
-		
+		int_representation = 0
 		string_labels = label_data.pop(choosen_label)
 		#print(string_labels)
 		for index, label in string_labels.items():
 			#print(index)
+			if label == '':
+				label = 'Missing_data'
 			try:
 				intlabel = label_mapping[label] # Only to see if the label is possible to map
 			except KeyError:
 				#print('Found missing label:  + label')
-				label_mapping[label] = index
+				label_mapping[label] = int_representation
+				int_representation += 1
 	
 	# Sorts the label_mapping by value (int representation)
 	label_mapping = OrderedDict(sorted(label_mapping.items(), key=lambda x: x[1]))
@@ -400,8 +403,8 @@ def add_labels_to_structure(structure_directory, labels_directory):
 			if labelname != 'T_CHASSIS':
 				value = label_data.loc[(index_sd, labelname)]
 				if value == '':
-					value = 'undefined'
-				structured_data.loc[(index_sd, labelname)] = value
+					value = 'Missing_data'
+				structured_data.loc[(index_sd, labelname)] = str(value)
 	
 	structured_data = structured_data.reset_index()			
 							
