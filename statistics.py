@@ -75,7 +75,7 @@ def labels_statistics(directory):
 	dataframe.to_csv('volvo_labels' + datestring + '.csv', sep=';', index = False, index_label = False)
 		
 
-def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
+def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, label = '', specifics = ''):
 
 	resultfile = open("Histograms/statistics_results.txt", "a")
 
@@ -89,6 +89,11 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 			datafiles.append(directory + item)
 
 	dataframe = pandas.read_csv(datafiles[0], sep=";", index_col=False)
+	
+	if label != '' and specifics != '':
+		labelmask = (dataframe[label] == specifics)
+		dataframe = dataframe.loc[labelmask]
+	
 	dataframe = dataframe.loc[:, '1_1':'20_20']
 	#print(dataframe.head(10))
 
@@ -170,6 +175,8 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 	std2_over_mean_values = pandas.Series()
 	std3_over_mean_values = pandas.Series()
 	std5_over_mean_values = pandas.Series()
+	max_over_std3_values = pandas.Series()
+	number_max_over_std3 = 0
 	column_values = pandas.Series()
 	for x in range(1, 21):
 		for y in range(1, 21):
@@ -220,6 +227,13 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 			# All columns together
 			column_values = column_values.append(values, ignore_index=True)
 
+	for index, value in max_values.iteritems():
+		if value > std3_values.loc[index]:
+			number_max_over_std3 += 1
+			
+	max_over_std3_values = max_over_std3_values.append(pandas.Series([number_max_over_std3]), ignore_index=True)
+
+	
 	#print(column_values)
 			
 	value_min = column_values.min()
@@ -240,6 +254,14 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 	resultfile.write('Mean value ' + zero_values + ': ' + str(value_mean) + '\n\r')
 	resultfile.write('Std value: ' + zero_values + ': ' + str(value_std) + '\n\r')
 	resultfile.write('Over 3 std value: ' + zero_values + ': ' + str(number_over_std3) + '\n\r')
+	
+	max_over_std3_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Max value over std3 columns " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Max_value_over_std3_columns-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
 	
 	number_of_nan_values_row.plot(kind='hist', bins=40)
 	#x1,x2,y1,y2 = plt.axis()
@@ -346,15 +368,17 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0):
 
 	return
 
-
+"""
 column_statistics('Compressed/Compressed_valid_chassis/', False) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/Compressed_valid_chassis/', True) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/Compressed_valid_chassis/', False, 3000) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/Compressed_valid_chassis/', True, 3000) # Compressed_single Compressed_valid_chassis
-
-
 """
-column_statistics('Compressed/', False) # Compressed_single Compressed_valid_chassis	
+
+column_statistics('Compressed/', False, 0) # Compressed_single Compressed_valid_chassis	
+
+#column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
+"""
 column_statistics('Compressed/', True) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/', False, 3000) # Compressed_single Compressed_valid_chassis	
 column_statistics('Compressed/', True, 3000) # Compressed_single Compressed_valid_chassis

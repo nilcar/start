@@ -43,16 +43,16 @@ def main(argv):
 	
 	batch_size = args.batch_size # 100
 	#print('Batch_size: ' + str(batch_size))
-	train_steps = 1000 # 1000
+	train_steps = 100000 # 1000
 	nr_epochs = None
-	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
+	hidden_units = [400, 400] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'COUNTRY' # 'T_CHASSIS' 'COUNTRY' 'ENGINE_TYPE'
 	max_nr_nan = 0
-	fixed_selection = False
+	fixed_selection = True
 	
 	label_path = 'Labels/'
 	data_path = 'Testdata/' # 'Data_original/' 'Testdata/'
-	structured_data_path = 'Compressed/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
+	structured_data_path = 'Compressed/Compressed_valid_all_labels/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
 	
 	#sys.exit()
 	
@@ -135,7 +135,7 @@ def main(argv):
 		resultfile.write(template.format(expected[class_id], 100 * probability, expec))
 		
 		if str(expected[class_id]) == str(expec):
-			predictfile.write('Percent: ' + str(100 * probability) + ' T_CHASSIS: ' + str(expec) + '\n\r')
+			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(expec) + '\n\r')
 	
 	resultfile.write('\n\r******************************\n\r')
 	resultfile.close()

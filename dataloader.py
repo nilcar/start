@@ -142,19 +142,19 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	print(dataframe.head(10))
 	
 	if fixed_selection:
-		trainmask = (dataframe['truck_date'] > '2016-01-01') & (dataframe['truck_date'] <= '2017-06-30') 
+		trainmask = (dataframe['truck_date'] >= '2016-01-01') & (dataframe['truck_date'] <= '2017-06-30') 
 		trainset = dataframe.loc[trainmask]
 
 		print('Trainset:')
 		print(trainset.head())
 		
-		testmask = (dataframe['truck_date'] > '2017-07-01') & (dataframe['truck_date'] <= '2017-12-31') 
+		testmask = (dataframe['truck_date'] >= '2017-07-01') & (dataframe['truck_date'] <= '2017-12-31') 
 		testset = dataframe.loc[testmask]
 
 		print('Testset:')
 		print(testset.head())
 		
-		validationmask = (dataframe['truck_date'] > '2018-01-01') & (dataframe['truck_date'] <= '2018-12-31') 
+		validationmask = (dataframe['truck_date'] >= '2018-01-01') & (dataframe['truck_date'] <= '2018-12-31') 
 		validationset = dataframe.loc[validationmask]
 
 		print('Validationset:')
