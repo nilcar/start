@@ -368,14 +368,14 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 
 	return
 
-"""
-column_statistics('Compressed/Compressed_valid_chassis/', False) # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/Compressed_valid_chassis/', True) # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/Compressed_valid_chassis/', False, 3000) # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/Compressed_valid_chassis/', True, 3000) # Compressed_single Compressed_valid_chassis
-"""
 
-column_statistics('Compressed/', False, 0) # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/Compressed_valid_all_labels/', False, 0, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/Compressed_valid_all_labels/', True, 0, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/Compressed_valid_all_labels/', False, 3000, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
+column_statistics('Compressed/Compressed_valid_all_labels/', True, 3000, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis
+
+
+#column_statistics('Compressed/', False, 0) # Compressed_single Compressed_valid_chassis	
 
 #column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
 """

@@ -43,9 +43,9 @@ def main(argv):
 	
 	batch_size = args.batch_size # 100
 	#print('Batch_size: ' + str(batch_size))
-	train_steps = 100000 # 1000
+	train_steps = 1000 # 1000
 	nr_epochs = None
-	hidden_units = [400, 400] # [10, 10] [400, 400] [400, 400, 400, 400]
+	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
 	choosen_label = 'COUNTRY' # 'T_CHASSIS' 'COUNTRY' 'ENGINE_TYPE'
 	max_nr_nan = 0
 	fixed_selection = True
@@ -92,7 +92,7 @@ def main(argv):
 		my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
 
 	# The model must choose between x classes.
-	print('Number of unique trucks, n_classes: ' + str(len(label_mapping)))
+	print('Number of unique labels, n_classes: ' + str(len(label_mapping)))
 	#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
 	
 	# optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ?

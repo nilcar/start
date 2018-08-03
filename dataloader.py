@@ -10,6 +10,7 @@ import sys
 from sklearn.model_selection import train_test_split
 import tensorflow
 from collections import OrderedDict
+import mysql.connector
 #import mysql.connector
 #from tensorflow.python.data import Dataset
 
@@ -131,34 +132,74 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		datestring = datestring.replace(':', '-')
 		#print(dataframe.head())
 		dataframe.to_csv('Compressed/volvo_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
-
+	
+		
 	dataframe = nan_statistics(dataframe)
 	
 	dataframe = exclude_rows_with_nan(dataframe, max_nr_of_nan)
 	print('Size of dataframe where Nan rows excluded:' + str(dataframe.size))
 	
-	dataframe = dataframe.fillna(value = 0.0) # inplace = True
+	dataframe = dataframe.fillna(value = 0.0)
 	print('After filling')
 	print(dataframe.head(10))
 	
 	if fixed_selection:
-		trainmask = (dataframe['truck_date'] >= '2016-01-01') & (dataframe['truck_date'] <= '2017-06-30') 
-		trainset = dataframe.loc[trainmask]
 
+		dataframe = dataframe.set_index('truck_date')
+		dataframe.index = pandas.to_datetime(dataframe.index)
+		
+		trainset = dataframe.loc['2016-1-1':'2016-5-31']
+		testset = dataframe.loc['2016-6-1':'2016-6-10']
+		validationset = dataframe.loc['2016-6-11':'2018-12-31']
+		
+		
+		""" DB
+		sql_train = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-01-01' and '2016-05-31'"
+		sql_test = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-06-01' and '2016-06-10'"
+		sql_validate = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-06-11' and '2018-12-31'"
+		
+		mydb = mysql.connector.connect(
+		host="localhost",
+		user="root",
+		passwd="roghog",
+		database="roger")
+		
+		trainset = pandas.read_sql(sql_train, mydb)
+		testset = pandas.read_sql(sql_test, mydb)
+		validationset = pandas.read_sql(sql_validate, mydb)
+		
+		print('Read all from database........ \n\n')
+		
+		#print(trainset.head(20))
+		
+		# Empty cells gets 0.0 from db selection
+		trainset = trainset.replace('None', numpy.nan)
+		testset = testset.replace('None', numpy.nan)
+		validationset = validationset.replace('None', numpy.nan)
+		
+		trainset = nan_statistics(trainset)
+		testset = nan_statistics(testset)
+		validationset = nan_statistics(validationset)
+	
+		trainset = exclude_rows_with_nan(trainset, max_nr_of_nan)
+		testset= exclude_rows_with_nan(testset, max_nr_of_nan)
+		validationset = exclude_rows_with_nan(validationset, max_nr_of_nan)
+		
+		
+		trainset = trainset.fillna(value = 0.0)
+		testset = testset.fillna(value = 0.0)
+		validationset = validationset.fillna(value = 0.0)
+		
+		"""
+		
+		
 		print('Trainset:')
 		print(trainset.head())
-		
-		testmask = (dataframe['truck_date'] >= '2017-07-01') & (dataframe['truck_date'] <= '2017-12-31') 
-		testset = dataframe.loc[testmask]
-
 		print('Testset:')
 		print(testset.head())
-		
-		validationmask = (dataframe['truck_date'] >= '2018-01-01') & (dataframe['truck_date'] <= '2018-12-31') 
-		validationset = dataframe.loc[validationmask]
-
 		print('Validationset:')
 		print(validationset.head())
+		
 	
 	else:
 		#trainset, testset = train_test_split(dataframe, test_size=0.4)
@@ -167,14 +208,16 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
 	
+	
 	"""
-	print(trainset.head())
+	#print(trainset.head())
 	print(trainset.size)
-	print(testset.head())
+	#print(testset.head())
 	print(testset.size)
-	print(validationset.head())
+	#print(validationset.head())
 	print(validationset.size)
 	"""
+
 	resultfile.close()
 	
 	return trainset, testset, validationset
