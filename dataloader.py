@@ -10,7 +10,6 @@ import sys
 from sklearn.model_selection import train_test_split
 import tensorflow
 from collections import OrderedDict
-import mysql.connector
 #import mysql.connector
 #from tensorflow.python.data import Dataset
 
@@ -90,6 +89,9 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		print('Inserting data...\n')
 		accepted_labels = 0
 		invalid_labels = 0
+		doubles_dict = {}
+		found_doubles = {}
+		
 		for index, row in csv_data.iterrows():
 			# Only insert data where truck_id is found in label_mapping
 			index2 = row[truck_id]
@@ -99,6 +101,15 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 				index3 = row[truck_date]
 				column = str(row['x_index']) + '_' + str(row['y_index'])
 				value = row['value']
+				
+				key = index1 + ':' +  index2 + ':' +  index3 + '#' +  column
+				try:
+					valueseries = doubles_dict[key]
+					valueseries = valueseries.append(pandas.Series([value]))
+					doubles_dict[key] = valueseries
+					value = valueseries.max()
+				except KeyError:
+					doubles_dict[key] = pandas.Series([value])
 				
 				try: 
 					# insert value if indexed row exist
@@ -151,6 +162,10 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		trainset = dataframe.loc['2016-1-1':'2016-5-31']
 		testset = dataframe.loc['2016-6-1':'2016-6-10']
 		validationset = dataframe.loc['2016-6-11':'2018-12-31']
+		
+		trainset = trainset.reset_index()
+		testset = testset.reset_index()
+		validationset = validationset.reset_index()
 		
 		
 		""" DB
@@ -360,6 +375,9 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 def exclude_rows_with_nan(dataframe, max_nr_of_nan = 0):
 
 	#Check for rows with invalid numbers of NaN and delete them...
+	
+	if max_nr_of_nan == 0:
+		return dataframe
 	
 	nr_of_rows = 0
 	nr_of_rows_deleted = 0
