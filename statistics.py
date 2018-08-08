@@ -8,6 +8,7 @@ import numpy
 import math
 import datetime
 import matplotlib.pyplot as plt
+from collections import OrderedDict
 
 
 
@@ -74,6 +75,115 @@ def labels_statistics(directory):
 	datestring = datestring.replace(':', '-')
 	dataframe.to_csv('volvo_labels' + datestring + '.csv', sep=';', index = False, index_label = False)
 		
+		
+def Label_statistics(directory, label):
+
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	dataframe = pandas.read_csv(datafiles[0], sep=";", index_col=False)
+
+	dataframe = dataframe.set_index('truck_date')
+	dataframe.index = pandas.to_datetime(dataframe.index)
+		
+	trainset = dataframe.loc['2016-1-1':'2016-5-31']
+	testset = dataframe.loc['2016-6-1':'2016-6-10']
+	validationset = dataframe.loc['2016-6-11':'2018-12-31']
+		
+	trainset = trainset.reset_index()
+	testset = testset.reset_index()
+	validationset = validationset.reset_index()
+	
+	dataseries_train = trainset.pop(label)
+	label_dict_train = {}
+	for index, value in dataseries_train.iteritems():
+		try:
+			data_value = label_dict_train[value]
+			label_dict_train[value] += 1
+		except KeyError:
+			label_dict_train[value] = 1	
+		
+	labelframe_train = pandas.DataFrame()
+	labelframe_train = labelframe_train.append(label_dict_train, ignore_index = True)
+	labelframe_train = labelframe_train.sort_values(by = 0, ascending = False, axis = 1)
+	
+	dataseries_test = testset.pop(label)
+	label_dict_test = {}
+	for index, value in dataseries_test.iteritems():
+		try:
+			data_value = label_dict_test[value]
+			label_dict_test[value] += 1
+		except KeyError:
+			label_dict_test[value] = 1	
+		
+	labelframe_test = pandas.DataFrame()
+	labelframe_test = labelframe_test.append(label_dict_test, ignore_index = True)
+	labelframe_test = labelframe_test.sort_values(by = 0, ascending = False, axis = 1)
+	
+	
+	dataseries_val = validationset.pop(label)
+	label_dict_val = {}
+	for index, value in dataseries_val.iteritems():
+		try:
+			data_value = label_dict_val[value]
+			label_dict_val[value] += 1
+		except KeyError:
+			label_dict_val[value] = 1	
+		
+	labelframe_val = pandas.DataFrame()
+	labelframe_val = labelframe_val.append(label_dict_val, ignore_index = True)
+	labelframe_val = labelframe_val.sort_values(by = 0, ascending = False, axis = 1)
+	
+
+	index_nr = 0
+	for column in labelframe_train.columns:	
+		if index_nr > 9:
+			labelframe_train.pop(column)
+		index_nr += 1
+	
+	index_nr = 0
+	for column in labelframe_test.columns:	
+		if index_nr > 9:
+			labelframe_test.pop(column)
+		index_nr += 1
+	
+
+	index_nr = 0
+	for column in labelframe_val.columns:	
+		if index_nr > 9:
+			labelframe_val.pop(column)
+		index_nr += 1
+	
+	print(labelframe_train.head(10))
+	print(labelframe_test.head(10))
+	print(labelframe_val.head(10))
+	
+	labelframe_train.plot(kind='bar')
+	#plt.show()
+	plt.title("Trainset countries ")
+	plt.grid(True)
+	plt.savefig("Histograms/Trainset_countries" + ".png")
+	plt.clf()
+	
+	labelframe_test.plot(kind='bar')
+	#plt.show()
+	plt.title("Testset countries ")
+	plt.grid(True)
+	plt.savefig("Histograms/Testset_countries" + ".png")
+	plt.clf()
+	
+	labelframe_val.plot(kind='bar')
+	#plt.show()
+	plt.title("Validationset countries ")
+	plt.grid(True)
+	plt.savefig("Histograms/Validationset_countries" + ".png")
+	plt.clf()
+	
+	
+		
 
 def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, label = '', specifics = ''):
 
@@ -97,30 +207,30 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 	dataframe = dataframe.loc[:, '1_1':'20_20']
 	#print(dataframe.head(10))
 
-	"""
-	# NaN statistics
+	
+	# NaN statistics before replacements
 	# For column
-	number_of_nan_values = pandas.Series()
+	number_of_nan_values_default = pandas.Series()
 	for x in range(1, 21):
 		for y in range(1, 21):
-			number_of_nan = 0
+			number_of_nan_default = 0
 			column = str(x) + '_' + str(y)
 			values = dataframe.loc[:,column]
 			for value in values:
 				if math.isnan(value):
-					number_of_nan += 1
-			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
+					number_of_nan_default += 1
+			number_of_nan_values_default = number_of_nan_values_default.append(pandas.Series([number_of_nan_default]), ignore_index=True)
 	# For row
-	number_of_nan_values_row = pandas.Series()
+	number_of_nan_values_row_default = pandas.Series()
 	for index, row in dataframe.iterrows():
-		number_of_nan_row = 0
+		number_of_nan_row_default = 0
 		for x in range(1, 21):
 			for y in range(1, 21):
 				value = row[str(x) + '_' + str(y)]
 				if math.isnan(value):
-					number_of_nan_row += 1
-		number_of_nan_values_row= number_of_nan_values_row.append(pandas.Series([number_of_nan_row]), ignore_index=True)
-	"""
+					number_of_nan_row_default += 1
+		number_of_nan_values_row_default = number_of_nan_values_row_default.append(pandas.Series([number_of_nan_row_default]), ignore_index=True)
+	
 	
 	if upper_limit > 0:
 		upper_limit_info = ' Upper_limit: ' + str(upper_limit)
@@ -138,21 +248,6 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 	if zero_values_excluded:
 		dataframe = dataframe.replace(0.0, numpy.nan)
 		zero_values = 'without zero values'
-	
-	"""
-	# NaN statistics
-	# For column
-	number_of_nan_values = pandas.Series()
-	for x in range(1, 21):
-		for y in range(1, 21):
-			number_of_nan = 0
-			column = str(x) + '_' + str(y)
-			values = dataframe.loc[:,column]
-			for value in values:
-				if math.isnan(value):
-					number_of_nan += 1
-			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
-	"""
 	
 	# For row
 	number_of_nan_values_row = pandas.Series()
@@ -228,7 +323,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 			column_values = column_values.append(values, ignore_index=True)
 
 	for index, value in max_values.iteritems():
-		if value > std3_values.loc[index]:
+		if value > (std3_values.loc[index]):
 			number_max_over_std3 += 1
 			
 	max_over_std3_values = max_over_std3_values.append(pandas.Series([number_max_over_std3]), ignore_index=True)
@@ -247,7 +342,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 		if value > std3_level:
 			number_over_std3 += 1
 	
-	resultfile.write('For all columns together: ' + zero_values + upper_limit_info + '\n\r')	
+	resultfile.write('\n\rFor all columns together: ' + zero_values + upper_limit_info + '\n\r')	
 	resultfile.write('Number of values ' + zero_values + ': ' + str(column_values.size) + '\n\r')
 	resultfile.write('Min value ' + zero_values + ': ' + str(value_min) + '\n\r')
 	resultfile.write('Max value ' + zero_values + ': ' + str(value_max) + '\n\r')
@@ -261,6 +356,22 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 	plt.title("Max value over std3 columns " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
 	plt.grid(True)
 	plt.savefig("Histograms/Max_value_over_std3_columns-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	number_of_nan_values_row_default.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values row_default " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Number_of_NaN_values_row_default-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	number_of_nan_values_default.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values column_default " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Number_of_NaN_values_column_default-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	
 	number_of_nan_values_row.plot(kind='hist', bins=40)
@@ -368,22 +479,17 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 
 	return
 
-
-column_statistics('Compressed/Compressed_valid_all_labels/', False, 0, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/Compressed_valid_all_labels/', True, 0, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/Compressed_valid_all_labels/', False, 3000, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/Compressed_valid_all_labels/', True, 3000, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis
-
-
-#column_statistics('Compressed/', False, 0) # Compressed_single Compressed_valid_chassis	
-
-#column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_single Compressed_valid_chassis	
 """
-column_statistics('Compressed/', True) # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/', False, 3000) # Compressed_single Compressed_valid_chassis	
-column_statistics('Compressed/', True, 3000) # Compressed_single Compressed_valid_chassis
+column_statistics('Compressed/Compressed_valid_all_labels/', False) #  'COUNTRY', 'USA' 	
+column_statistics('Compressed/Compressed_valid_all_labels/', True) # 
+column_statistics('Compressed/Compressed_valid_all_labels/', False, 3000) # 	
+column_statistics('Compressed/Compressed_valid_all_labels/', True, 3000) # 
 """
 
+#column_statistics('Compressed/', False, 0) # Compressed_valid_chassis	
+#column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_valid_chassis	
+
+#Label_statistics('Compressed/Compressed_valid_all_labels/', 'COUNTRY')
 		
 #labels_statistics('Data_original/')
 		

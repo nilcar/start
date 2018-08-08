@@ -16,7 +16,7 @@ from collections import OrderedDict
 
 
 """
-Returns three pandas dataframes randomously shuffled data with standard index
+Returns three pandas dataframes randomously shuffled data with standard index or three sets by date downselection
 If compressed is True; data will be read from a csv file with already structured data.
 If compressed is False; data will be read from csv source files and then structured
 labelmapping should been done before outside this function and come as an filled dictionary
@@ -36,8 +36,6 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	
 	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
 	
-	#print(len(CSV_COLUMN_NAMES))
-	
 	datafiles = []
 	for item in listdir(directory): 
 		if isfile(join(directory, item)):
@@ -45,7 +43,6 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	
 	#print(datafiles)
 	
-	#print('Reading and merging cvs files, merging only if "compressed" is false')
 	csv_data = pandas.DataFrame()
 	nr = 1
 	if not(compressed_data):		
@@ -103,11 +100,13 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 				value = row['value']
 				
 				key = index1 + ':' +  index2 + ':' +  index3 + '#' +  column
+				
+				# Pick the max value for double data
 				try:
 					valueseries = doubles_dict[key]
 					valueseries = valueseries.append(pandas.Series([value]))
 					doubles_dict[key] = valueseries
-					value = valueseries.max()
+					value = valueseries.max(skipna=False)
 				except KeyError:
 					doubles_dict[key] = pandas.Series([value])
 				
@@ -168,7 +167,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		validationset = validationset.reset_index()
 		
 		
-		""" DB
+		""" DB Observe DB doesnt contain NaN values, to be fixed...
 		sql_train = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-01-01' and '2016-05-31'"
 		sql_test = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-06-01' and '2016-06-10'"
 		sql_validate = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-06-11' and '2018-12-31'"
@@ -207,7 +206,6 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		
 		"""
 		
-		
 		print('Trainset:')
 		print(trainset.head())
 		print('Testset:')
@@ -223,19 +221,11 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
 	
-	
-	"""
-	#print(trainset.head())
-	print(trainset.size)
-	#print(testset.head())
-	print(testset.size)
-	#print(validationset.head())
-	print(validationset.size)
-	"""
-
 	resultfile.close()
 	
 	return trainset, testset, validationset
+	
+	
 	
 def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 
@@ -288,7 +278,7 @@ def train_input_fn(features, labels, batch_size, nr_epochs):
 	dataset = tensorflow.data.Dataset.from_tensor_slices((dict(features), labels))
 
 	# repeat, and batch the examples.
-	dataset = dataset.repeat(nr_epochs).batch(batch_size)
+	dataset = dataset.shuffle(1000).repeat(nr_epochs).batch(batch_size)
 	#ds = ds.batch(batch_size).repeat(num_epochs) # num_epochs ?
 	
 	version_full = tensorflow.__version__
