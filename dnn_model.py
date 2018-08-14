@@ -43,12 +43,12 @@ def main(argv):
 	
 	batch_size = args.batch_size # 100
 	#print('Batch_size: ' + str(batch_size))
-	train_steps = 1000 # 1000
+	train_steps = 100000 # 1000
 	nr_epochs = None
-	hidden_units = [10, 10] # [10, 10] [400, 400] [400, 400, 400, 400]
-	choosen_label = 'T_CHASSIS' # 'T_CHASSIS' 'COUNTRY' 'ENGINE_TYPE'
+	hidden_units = [200, 200] # [10, 10] [400, 400] [400, 400, 400, 400]
+	choosen_label = 'BRAND_TYPE' # 'T_CHASSIS' 'COUNTRY' 'ENGINE_TYPE' 'BRAND_TYPE'
 	max_nr_nan = 0
-	fixed_selection = False
+	fixed_selection = True
 	
 	label_path = 'Labels/'
 	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
@@ -73,8 +73,8 @@ def main(argv):
 	
 	
 	#Get three structured separate dataframes from data sources
-	trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan, fixed_selection)
-	#trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan, fixed_selection)
+	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan, fixed_selection)
+	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan, fixed_selection)
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = \

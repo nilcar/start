@@ -76,6 +76,53 @@ def labels_statistics(directory):
 	dataframe.to_csv('volvo_labels' + datestring + '.csv', sep=';', index = False, index_label = False)
 		
 		
+def Label_statistics_value(directory, label):
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	dataframe_temp = pandas.read_csv(datafiles[0], sep=";", index_col=False)	
+	dataframe = pandas.read_csv(datafiles[0], sep=";", index_col=False)	
+		
+	dataseries = dataframe_temp.pop(label)
+	label_values = {}	
+	for index, value in dataseries.iteritems():
+		try:
+			data_value = label_values[value]
+			label_values[value] += 1
+		except KeyError:
+			label_values[value] = 1
+
+	
+	for key in label_values.keys():
+		mean_values = pandas.Series()
+		labelmask = (dataframe[label] == key)
+		dataframe_label = dataframe.loc[labelmask]
+		dataframe_label = dataframe_label.loc[:, '1_1':'20_20']
+		for x in range(1, 21):
+			for y in range(1, 21):
+				column = str(x) + '_' + str(y)
+				mean_values = mean_values.append(pandas.Series(dataframe_label.loc[:,column].mean()))
+		
+		mean_values = mean_values.replace(numpy.nan, 0.0)
+		#print(mean_values.size)
+		
+		mean_values_np = mean_values.values
+		#print(mean_values_np)
+		mean_values_np = numpy.reshape(mean_values_np, (20,20), order='C')
+		
+		#mean_values.plot(kind='hist', bins=40, logy=True)
+		#plt.hist2d(mean_values, mean_values, bins=(20, 20), cmap=plt.cm.jet, range=(20,20))
+		plt.imshow(mean_values_np, cmap=plt.cm.jet, origin='lower') # shape=(20,20)
+		plt.title("Mean values column: " + key + ' \nNumber of values: ' + str(dataframe_label.size))
+		plt.grid(True)
+		plt.savefig("Histograms/Mean_values-" + key + ".png")
+		plt.clf()
+		
+		
+		
 def Label_statistics(directory, label):
 
 
@@ -163,23 +210,23 @@ def Label_statistics(directory, label):
 	
 	labelframe_train.plot(kind='bar')
 	#plt.show()
-	plt.title("Trainset countries ")
+	plt.title("Trainset " + label)
 	plt.grid(True)
-	plt.savefig("Histograms/Trainset_countries" + ".png")
+	plt.savefig("Histograms/Trainset_" + label + ".png")
 	plt.clf()
 	
 	labelframe_test.plot(kind='bar')
 	#plt.show()
-	plt.title("Testset countries ")
+	plt.title("Testset " + label)
 	plt.grid(True)
-	plt.savefig("Histograms/Testset_countries" + ".png")
+	plt.savefig("Histograms/Testset_" + label + ".png")
 	plt.clf()
 	
 	labelframe_val.plot(kind='bar')
 	#plt.show()
-	plt.title("Validationset countries ")
+	plt.title("Validationset " + label)
 	plt.grid(True)
-	plt.savefig("Histograms/Validationset_countries" + ".png")
+	plt.savefig("Histograms/Validationset_" + label + ".png")
 	plt.clf()
 	
 	
@@ -358,7 +405,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 	plt.savefig("Histograms/Max_value_over_std3_columns-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	
-	number_of_nan_values_row_default.plot(kind='hist', bins=40)
+	number_of_nan_values_row_default.plot(kind='hist', bins=40, logy=True)
 	#x1,x2,y1,y2 = plt.axis()
 	#plt.axis((x1,x2,y1,400))
 	plt.title("Number of NaN values row_default " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
@@ -374,7 +421,7 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 	plt.savefig("Histograms/Number_of_NaN_values_column_default-" + zero_values + upper_limit_file + ".png")
 	plt.clf()
 	
-	number_of_nan_values_row.plot(kind='hist', bins=40)
+	number_of_nan_values_row.plot(kind='hist', bins=40, logy=True)
 	#x1,x2,y1,y2 = plt.axis()
 	#plt.axis((x1,x2,y1,400))
 	plt.title("Number of NaN values row " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
@@ -489,10 +536,11 @@ column_statistics('Compressed/Compressed_valid_all_labels/', True, 3000) #
 #column_statistics('Compressed/', False, 0) # Compressed_valid_chassis	
 #column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_valid_chassis	
 
-#Label_statistics('Compressed/Compressed_valid_all_labels/', 'COUNTRY')
+#Label_statistics('Compressed/Compressed_valid_all_labels/', 'BRAND_TYPE') # ENGINE_TYPE COUNTRY TRUCK_TYPE BRAND_TYPE T_CHASSIS
 		
 #labels_statistics('Data_original/')
 		
+Label_statistics_value('Compressed/Compressed_valid_all_labels/', 'COUNTRY')
 		
 		
 		
