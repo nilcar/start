@@ -116,6 +116,7 @@ def Label_statistics_value(directory, label):
 		#mean_values.plot(kind='hist', bins=40, logy=True)
 		#plt.hist2d(mean_values, mean_values, bins=(20, 20), cmap=plt.cm.jet, range=(20,20))
 		plt.imshow(mean_values_np, cmap=plt.cm.jet, origin='lower') # shape=(20,20)
+		plt.colorbar()
 		plt.title("Mean values column: " + key + ' \nNumber of values: ' + str(dataframe_label.size))
 		plt.grid(True)
 		plt.savefig("Histograms/Mean_values-" + key + ".png")
