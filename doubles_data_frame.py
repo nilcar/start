@@ -20,8 +20,8 @@ def getDoubleFrequency(directory):
 	
 	doubles_dict = {}
 	found_doubles = {}
-	I_doubles = {}
-	M_doubles = {}
+	K_doubles = {}
+	O_doubles = {}
 	
 	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'value', 'Q', 'R', 'S']
 	
@@ -32,9 +32,11 @@ def getDoubleFrequency(directory):
 		if isfile(join(directory, item)):
 			datafiles.append(directory + item)
 	
+	nr = 1
 	for datafile in datafiles:
 		row_nr = 1
 		csv_data = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, header=None, index_col=False)
+		print('appended cvsfile nr: ' + str(nr))
 		for index, row in csv_data.iterrows():
 			# Only insert data where truck_id is found in label_mapping
 			index2 = row[truck_id]
@@ -44,30 +46,30 @@ def getDoubleFrequency(directory):
 			#value = row['value']
 	
 			# Look for double entries in the source data
-			key = index1 + ':' +  index2 + ':' +  index3 + '#' +  str(row['I']) + ':' +  str(row['J'])  + ':' +  str(row['K'])  + ':' +  str(row['M'])  + ':' +  str(row['N'])  + ':' +  str(row['O'])
+			key = str(row['I']) + ':' +  str(row['J'])  + ':' +  str(row['K'])  + ':' +  str(row['M'])  + ':' +  str(row['N'])  + ':' +  str(row['O'])
 			try:
 				valuefirst = doubles_dict[key]
 				valuefirst += 1
 				found_doubles[key] = valuefirst
-				I_doubles[key] = str(row['I'])
-				M_doubles[key] = str(row['M'])
+				K_doubles[key] = str(row['K'])
+				O_doubles[key] = str(row['O'])
 				
 			except KeyError:
 				doubles_dict[key] = 1
 			row_nr += 1
-				
+		nr += 1		
 				
 	doublesframe = pandas.DataFrame()
 	doublesframe['Key'] = found_doubles.keys()
 	doublesframe['Frequency'] = found_doubles.values()
-	doublesframe['I'] = I_doubles.values()
-	doublesframe['M'] = M_doubles.values()
+	doublesframe['K'] = K_doubles.values()
+	doublesframe['O'] = O_doubles.values()
 	
 	#print(doublesframe.head())
 	#index_tuple = ('Frequency', 'I', 'M')
 	#doublesframe = doublesframe.set_index(list(index_tuple))
 	
-	doublesframe = doublesframe.sort_values(['Frequency', 'I', 'M'], ascending = [False,False,False])
+	doublesframe = doublesframe.sort_values(['Frequency', 'K', 'O'], ascending = [False,False,False])
 	#doublesframe = doublesframe.sort_index(level=['Frequency', 'I', 'M'], ascending = [False,False,False])
 	#doublesframe = doublesframe.sort_values(by=['Frequency', 'I', 'M'], ascending = [False,False,False])
 	
@@ -82,7 +84,7 @@ def getDoubleFrequency(directory):
 
 	
 	
-getDoubleFrequency('Testdata/') # 'Data_original/' 'Testdata/'
+getDoubleFrequency('Data_original/') # 'Data_original/' 'Testdata/'
 	
 	
 	

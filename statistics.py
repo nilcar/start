@@ -115,10 +115,16 @@ def Label_statistics_value(directory, label):
 		
 		#mean_values.plot(kind='hist', bins=40, logy=True)
 		#plt.hist2d(mean_values, mean_values, bins=(20, 20), cmap=plt.cm.jet, range=(20,20))
+		#plt.axis((0,20,0,20))
 		plt.imshow(mean_values_np, cmap=plt.cm.jet, origin='lower') # shape=(20,20)
 		plt.colorbar()
 		plt.title("Mean values column: " + key + ' \nNumber of values: ' + str(dataframe_label.size))
-		plt.grid(True)
+		
+		#fig, ax = plt.subplots()
+		plt.yticks([0.0,1.0, 2.0,3.0,4.0,5.0,6-0,7-0,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0,16.0,17.0,18.0,19.0])
+		plt.xticks([0.0,1.0, 2.0,3.0,4.0,5.0,6-0,7-0,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0,16.0,17.0,18.0,19.0])
+		
+		plt.grid(b=True)
 		plt.savefig("Histograms/Mean_values-" + key + ".png")
 		plt.clf()
 		
@@ -537,11 +543,11 @@ column_statistics('Compressed/Compressed_valid_all_labels/', True, 3000) #
 #column_statistics('Compressed/', False, 0) # Compressed_valid_chassis	
 #column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_valid_chassis	
 
-#Label_statistics('Compressed/Compressed_valid_all_labels/', 'BRAND_TYPE') # ENGINE_TYPE COUNTRY TRUCK_TYPE BRAND_TYPE T_CHASSIS
+#Label_statistics('Compressed/Compressed_valid_all_labels/', 'BRAND_TYPE') # ENGINE_TYPE COUNTRY TRUCK_TYPE BRAND_TYPE T_CHASSIS Compressed_valid_all_labels/
 		
 #labels_statistics('Data_original/')
 		
-Label_statistics_value('Compressed/Compressed_valid_all_labels/', 'COUNTRY')
+Label_statistics_value('Compressed/Compressed_valid_all_labels/', 'COUNTRY') # Compressed_valid_all_labels/
 		
 		
 		
