@@ -73,9 +73,10 @@ def labels_statistics(directory):
 	dataframe['Int_label'] = label_mapping.values()
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	dataframe.to_csv('volvo_labels' + datestring + '.csv', sep=';', index = False, index_label = False)
+	dataframe.to_csv('frame_labels' + datestring + '.csv', sep=';', index = False, index_label = False)
 		
-		
+
+# Plots 2D histograma for a choosen Label, one histogram per label value		
 def Label_statistics_value(directory, label):
 
 	datafiles = []
@@ -129,7 +130,7 @@ def Label_statistics_value(directory, label):
 		plt.clf()
 		
 		
-		
+# Plots barplots for a choosen label, The ten highest values are presented for train. test and validation sets		
 def Label_statistics(directory, label):
 
 
@@ -238,8 +239,8 @@ def Label_statistics(directory, label):
 	
 	
 		
-
-def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, label = '', specifics = ''):
+# Plots a large set of plots, can be downselected by up to two labels and their values
+def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, label = '', specifics = '', label2 = '', specifics2 = ''):
 
 	resultfile = open("Histograms/statistics_results.txt", "a")
 
@@ -257,6 +258,9 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 	if label != '' and specifics != '':
 		labelmask = (dataframe[label] == specifics)
 		dataframe = dataframe.loc[labelmask]
+		if label2 != '' and specifics2 != '':
+			labelmask = (dataframe[label2] == specifics2)
+			dataframe = dataframe.loc[labelmask]
 	
 	dataframe = dataframe.loc[:, '1_1':'20_20']
 	#print(dataframe.head(10))
@@ -532,6 +536,301 @@ def column_statistics(directory, zero_values_excluded = False, upper_limit = 0, 
 	resultfile.close()
 
 	return
+	
+	
+# prints a set of histograms subsetted by sql_query (Should be: SELECT * FROM data_valid_all_labels WHERE ...)
+def column_statisticsDB(mydb_connector, zero_values_excluded = False, upper_limit = 0, sql_query = 'Sql_query'):
+
+	resultfile = open("Histograms/statistics_resultsDB.txt", "a")
+
+	zero_values = 'with zero values'
+	upper_limit_info = ''
+	upper_limit_file = ''
+	
+	"""
+	mydb = mysql.connector.connect(
+		host="localhost",
+		user="root",
+		passwd="roghog",
+		database="roger")
+	"""
+		
+	dataframe = pandas.read_sql(sql_query, mydb_connector)
+
+	dataframe = dataframe.loc[:, '1_1':'20_20']
+	#print(dataframe.head(10))
+
+	
+	# NaN statistics before replacements
+	# For column
+	number_of_nan_values_default = pandas.Series()
+	for x in range(1, 21):
+		for y in range(1, 21):
+			number_of_nan_default = 0
+			column = str(x) + '_' + str(y)
+			values = dataframe.loc[:,column]
+			for value in values:
+				if math.isnan(value):
+					number_of_nan_default += 1
+			number_of_nan_values_default = number_of_nan_values_default.append(pandas.Series([number_of_nan_default]), ignore_index=True)
+	# For row
+	number_of_nan_values_row_default = pandas.Series()
+	for index, row in dataframe.iterrows():
+		number_of_nan_row_default = 0
+		for x in range(1, 21):
+			for y in range(1, 21):
+				value = row[str(x) + '_' + str(y)]
+				if math.isnan(value):
+					number_of_nan_row_default += 1
+		number_of_nan_values_row_default = number_of_nan_values_row_default.append(pandas.Series([number_of_nan_row_default]), ignore_index=True)
+	
+	
+	if upper_limit > 0:
+		upper_limit_info = ' Upper_limit: ' + str(upper_limit)
+		upper_limit_file = ' Upper_limit'
+		for index, row in dataframe.iterrows():
+			for x in range(1, 21):
+				for y in range(1, 21):
+					value = row[str(x) + '_' + str(y)]
+					if value > upper_limit:
+						row[str(x) + '_' + str(y)] = numpy.nan
+						#print(row[str(x) + '_' + str(y)])
+				
+	#print(dataframe.head(10))
+	
+	if zero_values_excluded:
+		dataframe = dataframe.replace(0.0, numpy.nan)
+		zero_values = 'without zero values'
+	
+	# For row
+	number_of_nan_values_row = pandas.Series()
+	for index, row in dataframe.iterrows():
+		number_of_nan_row = 0
+		for x in range(1, 21):
+			for y in range(1, 21):
+				value = row[str(x) + '_' + str(y)]
+				if math.isnan(value):
+					number_of_nan_row += 1
+		number_of_nan_values_row= number_of_nan_values_row.append(pandas.Series([number_of_nan_row]), ignore_index=True)
+	
+	number_of_nan_values = pandas.Series()
+	min_values = pandas.Series()
+	max_values = pandas.Series()
+	mean_values = pandas.Series()
+	std_values = pandas.Series()
+	std3_values = pandas.Series()
+	std_over_mean_values = pandas.Series()
+	std2_over_mean_values = pandas.Series()
+	std3_over_mean_values = pandas.Series()
+	std5_over_mean_values = pandas.Series()
+	max_over_std3_values = pandas.Series()
+	number_max_over_std3 = 0
+	column_values = pandas.Series()
+	for x in range(1, 21):
+		for y in range(1, 21):
+			column = str(x) + '_' + str(y)
+			number_over_mean_std = 0
+			number_over_mean_std2 = 0
+			number_over_mean_std3 = 0
+			number_over_mean_std5 = 0
+			number_over_std3 = 0
+			number_of_nan = 0
+			
+			min_values = min_values.append(pandas.Series(dataframe.loc[:,column].min()))
+			max_values = max_values.append(pandas.Series(dataframe.loc[:,column].max()))
+			mean_values = mean_values.append(pandas.Series(dataframe.loc[:,column].mean()))
+			std_values = std_values.append(pandas.Series(dataframe.loc[:,column].std()))
+			
+			values = dataframe.loc[:,column]
+			for value in values:
+				if math.isnan(value):
+					number_of_nan += 1
+			
+				std = values.std()
+				std2 = std * 2
+				std3 = std * 3
+				std5 = std * 5
+				mean = values.mean()
+				
+				if value > std3:
+					number_over_std3 += 1
+				
+				difference_from_mean = abs(value - mean)
+				if difference_from_mean > std:
+					number_over_mean_std += 1
+				if difference_from_mean > std2:
+					number_over_mean_std2 += 1
+				if difference_from_mean > std3:
+					number_over_mean_std3 += 1
+				if difference_from_mean > std5:
+					number_over_mean_std5 += 1
+			
+			number_of_nan_values= number_of_nan_values.append(pandas.Series([number_of_nan]), ignore_index=True)
+			std3_values = std3_values.append(pandas.Series([number_over_std3]), ignore_index=True)
+			std_over_mean_values = std_over_mean_values.append(pandas.Series([number_over_mean_std]), ignore_index=True)
+			std2_over_mean_values = std2_over_mean_values.append(pandas.Series([number_over_mean_std2]), ignore_index=True)
+			std3_over_mean_values = std3_over_mean_values.append(pandas.Series([number_over_mean_std3]), ignore_index=True)
+			std5_over_mean_values = std5_over_mean_values.append(pandas.Series([number_over_mean_std5]), ignore_index=True)
+			
+			# All columns together
+			column_values = column_values.append(values, ignore_index=True)
+
+	for index, value in max_values.iteritems():
+		if value > (std3_values.loc[index]):
+			number_max_over_std3 += 1
+			
+	max_over_std3_values = max_over_std3_values.append(pandas.Series([number_max_over_std3]), ignore_index=True)
+
+	
+	#print(column_values)
+			
+	value_min = column_values.min()
+	value_max = column_values.max()
+	value_mean = column_values.mean()
+	value_std = column_values.std()
+	std3_level = value_std * 3
+	
+	number_over_std3 = 0
+	for value in column_values:
+		if value > std3_level:
+			number_over_std3 += 1
+	
+	resultfile.write('\n\rFor all columns together: ' + zero_values + upper_limit_info + '\n\r')	
+	resultfile.write('Number of values ' + zero_values + ': ' + str(column_values.size) + '\n\r')
+	resultfile.write('Min value ' + zero_values + ': ' + str(value_min) + '\n\r')
+	resultfile.write('Max value ' + zero_values + ': ' + str(value_max) + '\n\r')
+	resultfile.write('Mean value ' + zero_values + ': ' + str(value_mean) + '\n\r')
+	resultfile.write('Std value: ' + zero_values + ': ' + str(value_std) + '\n\r')
+	resultfile.write('Over 3 std value: ' + zero_values + ': ' + str(number_over_std3) + '\n\r')
+	
+	max_over_std3_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Max value over std3 columns " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Max_value_over_std3_columns-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	number_of_nan_values_row_default.plot(kind='hist', bins=40, logy=True)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values row_default " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Number_of_NaN_values_row_default-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	number_of_nan_values_default.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values column_default " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Number_of_NaN_values_column_default-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	number_of_nan_values_row.plot(kind='hist', bins=40, logy=True)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values row " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Number_of_NaN_values_row-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	number_of_nan_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Number of NaN values column " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Number_of_NaN_values_column-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	mean_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Mean_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+		
+	min_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Min values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Min_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	max_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Max values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Max_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	std_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	
+	std3_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation times 3 values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std3_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	#plt.show()
+	
+	std_over_mean_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std_over_mean_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	#plt.show()
+	
+	std2_over_mean_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation 2 over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std2_over_mean_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	#plt.show()
+	
+	std3_over_mean_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation 3 over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std3_over_mean_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	#plt.show()
+	
+	std5_over_mean_values.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Standard deviation 5 over mean values " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.grid(True)
+	plt.savefig("Histograms/Std5_over_mean_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+	#plt.show()
+	
+	plt.title("mean values(x) std_values(y) " + zero_values + upper_limit_info + ' \nNumber of values: ' + str(column_values.size))
+	plt.scatter(mean_values, std_values, c='r', marker='.') # s=2  (marker size) marker='.' (marker_type)
+	plt.grid(True)
+	plt.savefig("Histograms/scattered_mean_std_values-" + zero_values + upper_limit_file + ".png")
+	plt.clf()
+
+	
+	
+	resultfile.close()
+
+	return	
 
 """
 column_statistics('Compressed/Compressed_valid_all_labels/', False) #  'COUNTRY', 'USA' 	
@@ -541,14 +840,16 @@ column_statistics('Compressed/Compressed_valid_all_labels/', True, 3000) #
 """
 
 #column_statistics('Compressed/', False, 0) # Compressed_valid_chassis	
-#column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_valid_chassis	
+#column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA') # Compressed_valid_chassis
+#column_statistics('Compressed/', False, 0, 'COUNTRY', 'USA', 'GEARBOX_', 'ATO2612D') # Compressed_valid_chassis	
 
-#Label_statistics('Compressed/Compressed_valid_all_labels/', 'BRAND_TYPE') # ENGINE_TYPE COUNTRY TRUCK_TYPE BRAND_TYPE T_CHASSIS Compressed_valid_all_labels/
+#Label_statistics('Compressed/Compressed_valid_all_labels/', 'GEARBOX_') # GEARBOX_ ENGINE_TYPE COUNTRY TRUCK_TYPE BRAND_TYPE T_CHASSIS Compressed_valid_all_labels/
 		
 #labels_statistics('Data_original/')
 		
-Label_statistics_value('Compressed/Compressed_valid_all_labels/', 'COUNTRY') # Compressed_valid_all_labels/
+#Label_statistics_value('Compressed/Compressed_valid_all_labels/', 'COUNTRY') # Compressed_valid_all_labels/
 		
+#column_statisticsDB(mydb_connector, zero_values_excluded = False, upper_limit = 0, sql_query = 'Sql_query'):
 		
 		
 	

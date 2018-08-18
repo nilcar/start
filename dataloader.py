@@ -144,7 +144,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 		datestring = datestring.replace(':', '-')
 		#print(dataframe.head())
-		dataframe.to_csv('Compressed/volvo_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
+		dataframe.to_csv('Compressed/data_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
 		
 	dataframe = nan_statistics(dataframe)
@@ -402,6 +402,8 @@ def exclude_rows_with_nan(dataframe, max_nr_of_nan = 0):
 	if nr_of_rows_deleted > 0:
 		dataframe = dataframe.drop(delete_rows)
 	print('Number of deleted rows: ' + str(nr_of_rows_deleted) + ' of rows total: ' + str(nr_of_rows))
+	resultfile = open("Results/model_results.txt", "a")
+	resultfile.write('\n\rNumber of deleted rows: ' + str(nr_of_rows_deleted) + ' of rows total: ' + str(nr_of_rows))
 	
 	return dataframe
 

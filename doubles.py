@@ -54,7 +54,7 @@ def get_doubles(directory):
 	doublesframe['first#double'] = found_doubles.values()
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	doublesframe.to_csv('volvo_doubles_different_values' + datestring + '.csv', sep=';', index = False, index_label = False)	
+	doublesframe.to_csv('frame_doubles_different_values' + datestring + '.csv', sep=';', index = False, index_label = False)	
 
 
 get_doubles('Data_original/') # 'Testdata/' 'Data_original/'
