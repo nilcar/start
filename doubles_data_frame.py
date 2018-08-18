@@ -20,7 +20,11 @@ def getDoubleFrequency(directory):
 	
 	doubles_dict = {}
 	found_doubles = {}
+	I_doubles = {}
+	J_doubles = {}
 	K_doubles = {}
+	M_doubles = {}
+	N_doubles = {}
 	O_doubles = {}
 	
 	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'value', 'Q', 'R', 'S']
@@ -50,8 +54,13 @@ def getDoubleFrequency(directory):
 			try:
 				valuefirst = doubles_dict[key]
 				valuefirst += 1
+				doubles_dict[key] = valuefirst
 				found_doubles[key] = valuefirst
+				I_doubles[key] = str(row['I'])
+				J_doubles[key] = str(row['J'])
 				K_doubles[key] = str(row['K'])
+				M_doubles[key] = str(row['M'])
+				N_doubles[key] = str(row['N'])
 				O_doubles[key] = str(row['O'])
 				
 			except KeyError:
@@ -62,7 +71,11 @@ def getDoubleFrequency(directory):
 	doublesframe = pandas.DataFrame()
 	doublesframe['Key'] = found_doubles.keys()
 	doublesframe['Frequency'] = found_doubles.values()
+	doublesframe['I'] = I_doubles.values()
+	doublesframe['J'] = J_doubles.values()
 	doublesframe['K'] = K_doubles.values()
+	doublesframe['M'] = M_doubles.values()
+	doublesframe['N'] = N_doubles.values()
 	doublesframe['O'] = O_doubles.values()
 	
 	#print(doublesframe.head())
@@ -80,7 +93,7 @@ def getDoubleFrequency(directory):
 	
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	doublesframe.to_csv('volvo_doubles_different_columnvalues' + datestring + '.csv', sep=';', index = False, index_label = False)	
+	doublesframe.to_csv('binning_frequency_IJKMNO ' + datestring + '.csv', sep=';', index = False, index_label = False)	
 
 	
 	
