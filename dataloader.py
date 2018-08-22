@@ -51,7 +51,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	if not(compressed_data):		
 		for datafile in datafiles:
 			#print(datafile)
-			csv_data_file = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, header=None, index_col=False)
+			csv_data_file = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, index_col=False)
 			#print(csv_data_file.head())
 			csv_data = csv_data.append(csv_data_file, ignore_index=True)
 			del csv_data_file

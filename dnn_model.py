@@ -17,21 +17,20 @@ import dataloader
 
 
 
+# Example: python dnn_model.py --batch_size 100 --train_steps 1000 --hidden_units 20,20  --nr_epochs 0 --choosen_label T_CHASSIS --label_path Labels/ --data_path Compressed/Compressed_valid_all_labels/Single/ --compressed_data True --max_nr_nan 0 --fixed_selection False
+
 parser = argparse.ArgumentParser()
-
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
-
-"""
 parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
-parser.add_argument('--hidden_units', default=[10,10], type=string, help='layout for hidden layers')
-parser.add_argument('--nr_epochs', default=None, type=int, help='number of epochs')
-parser.add_argument('--choosen_label', default=T_CHASSIS, type=string, help='the label to train and evaluate')
-parser.add_argument('--label_path', default=Labels/, type=string, help='where one labels file is located')
-parser.add_argument('--data_path', default=Data_original/, type=string, help='path to data source files or compressed file')
-parser.add_argument('--compressed', default=True, type=boolean, help='if true structured data will be used, false means data source files and a structured file will be produced')
+parser.add_argument('--hidden_units', default='10,10', type=str, help='layout for hidden layers')
+parser.add_argument('--nr_epochs', default=0, type=int, help='number of epochs')
+parser.add_argument('--choosen_label', default='T_CHASSIS', type=str, help='the label to train and evaluate')
+parser.add_argument('--label_path', default='Labels/', type=str, help='where one labels file is located')
+parser.add_argument('--data_path', default='Compressed/', type=str, help='path to data source files or compressed file')
+parser.add_argument('--compressed_data', default='True', type=str, help='if true structured data will be used only one file false means data source files and a structured file will be produced')
 parser.add_argument('--max_nr_nan', default=0, type=int, help='number of nan per row for exclusion')
-parser.add_argument('--fixed_sdelection', default=True, type=boolean, help='If true selection is done by truck_date')
-"""
+parser.add_argument('--fixed_selection', default='True', type=str, help='If true selection is done by truck_date')
+
 
 
 def main(argv):
@@ -43,15 +42,31 @@ def main(argv):
 	
 	batch_size = args.batch_size # 100
 	#print('Batch_size: ' + str(batch_size))
-	train_steps = 100000 # 1000
-	nr_epochs = None
-	hidden_units = [200, 200] # [10, 10] [400, 400] [400, 400, 400, 400]
-	choosen_label = 'BRAND_TYPE' # 'T_CHASSIS' 'COUNTRY' 'ENGINE_TYPE' 'BRAND_TYPE'
-	max_nr_nan = 0
-	fixed_selection = True
+	train_steps = args.train_steps # 100000 # 1000
+	nr_epochs =  args.nr_epochs # None
+	if nr_epochs == 0:
+		nr_epochs = None
+	hidden_units_arg = list(args.hidden_units.split(',')) # [10, 10] #args.hidden_units # [400, 400] # [10, 10] [400, 400] [400, 400, 400, 400]
+	hidden_units = []
+	for layer in hidden_units_arg:
+		hidden_units.append(int(layer))
 	
-	label_path = 'Labels/'
-	data_path = 'Data_original/' # 'Data_original/' 'Testdata/'
+	choosen_label = args.choosen_label # 'GEARBOX_' # 'T_CHASSIS' 'COUNTRY' 'ENGINE_TYPE' 'BRAND_TYPE' GEARBOX_
+	max_nr_nan = args.max_nr_nan # 0
+	if args.fixed_selection.lower() == 'false':
+		fixed_selection = False
+	else:
+		fixed_selection = True
+	#fixed_selection = args.fixed_selection # True
+	
+	if args.compressed_data.lower() == 'false':
+		compressed_data = False
+	else:
+		compressed_data = True
+	#compressed_data = False #args.compressed_data
+	
+	label_path = args.label_path # 'Labels/'
+	data_path = args.data_path # 'Data_original/' # 'Data_original/' 'Testdata/'
 	structured_data_path = 'Compressed/Compressed_valid_all_labels/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
 	
 	#sys.exit()
@@ -66,15 +81,18 @@ def main(argv):
 	resultfile.write('Choosen label: ' + choosen_label + '\n\r')
 	resultfile.write('Max_nr_nan: ' + str(max_nr_nan) + '\n\r')
 	resultfile.write('Fixed_selection: ' + str(fixed_selection) + '\n\r')
+	resultfile.write('Compressed_data: ' + str(compressed_data) + '\n\r')
+	resultfile.write('Label path: ' + str(label_path) + '\n\r')
+	resultfile.write('Data path: ' + str(data_path) + '\n\r')
 	resultfile.flush()
+	
 	
 	# Label_mapping holds key value pairs where key is the label and value its integer representation
 	label_mapping = dataloader.get_valid_labels(label_path, choosen_label) # Labels from labels file only
 	
 	
 	#Get three structured separate dataframes from data sources
-	#trainframe, testframe, validationframe = dataloader.loadData(data_path, False, label_mapping, max_nr_nan, fixed_selection)
-	trainframe, testframe, validationframe = dataloader.loadData(structured_data_path, True, label_mapping, max_nr_nan, fixed_selection)
+	trainframe, testframe, validationframe = dataloader.loadData(data_path, compressed_data, label_mapping, max_nr_nan, fixed_selection)
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = \
@@ -105,7 +123,7 @@ def main(argv):
 	classifier = tensorflow.estimator.DNNClassifier \
 		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping))
 	#classifier = tensorflow.estimator.DNNClassifier \
-	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Volvo_model')
+	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Saved_model')
 	
     ### Train the Model.
 	print('\nModel training\n\r\n\r\n')

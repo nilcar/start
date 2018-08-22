@@ -1,0 +1,8 @@
+Commandlines example:
+
+python dnn_model.py --batch_size 100 --train_steps 1000 --hidden_units 20,20  --nr_epochs 0 --choosen_label T_CHASSIS --label_path Labels/ --data_path Testdata/ --compressed_data False --max_nr_nan 0 --fixed_selection False
+
+
+
+
+
