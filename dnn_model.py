@@ -22,7 +22,7 @@ import dataloader
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
 parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
-parser.add_argument('--hidden_units', default='10,10', type=str, help='layout for hidden layers')
+parser.add_argument('--hidden_units', default='10x10', type=str, help='layout for hidden layers')
 parser.add_argument('--nr_epochs', default=0, type=int, help='number of epochs')
 parser.add_argument('--choosen_label', default='T_CHASSIS', type=str, help='the label to train and evaluate')
 parser.add_argument('--label_path', default='Labels/', type=str, help='where one labels file is located')
@@ -46,7 +46,7 @@ def main(argv):
 	nr_epochs =  args.nr_epochs # None
 	if nr_epochs == 0:
 		nr_epochs = None
-	hidden_units_arg = list(args.hidden_units.split(',')) # [10, 10] #args.hidden_units # [400, 400] # [10, 10] [400, 400] [400, 400, 400, 400]
+	hidden_units_arg = list(args.hidden_units.split('x')) # [10, 10] #args.hidden_units # [400, 400] # [10, 10] [400, 400] [400, 400, 400, 400]
 	hidden_units = []
 	for layer in hidden_units_arg:
 		hidden_units.append(int(layer))
@@ -67,11 +67,15 @@ def main(argv):
 	
 	label_path = args.label_path # 'Labels/'
 	data_path = args.data_path # 'Data_original/' # 'Data_original/' 'Testdata/'
-	structured_data_path = 'Compressed/Compressed_valid_all_labels/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
+	
+	file_suffix = '-' + choosen_label + '-' + args.hidden_units + '-' + str(args.train_steps)
+	
+	
+	#structured_data_path = 'Compressed/Compressed_valid_all_labels/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
 	
 	#sys.exit()
 	
-	resultfile = open("Results/model_results.txt", "w")
+	resultfile = open("Results/model_results" + file_suffix + ".txt", "w")
 	
 	resultfile.write('\n\rModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\r')
 	resultfile.write('Layer setting: ' + str(hidden_units) + '\n\r')
@@ -89,6 +93,10 @@ def main(argv):
 	
 	# Label_mapping holds key value pairs where key is the label and value its integer representation
 	label_mapping = dataloader.get_valid_labels(label_path, choosen_label) # Labels from labels file only
+	
+	inverted_label_mapping = {}
+	for key, value in label_mapping.items():
+		inverted_label_mapping[value] = key
 	
 	
 	#Get three structured separate dataframes from data sources
@@ -141,22 +149,28 @@ def main(argv):
 	### Evaluate the model
 	print('\nModel evaluation\n\n\n')
 	resultfile.write('\n\rModel evaluation\n\r\n\r\n')
-	expected = list(label_mapping.keys())
+	expected = list(int_labels_validate) #list(label_mapping.keys())
 	predictions = classifier.predict(input_fn=lambda:dataloader.eval_input_fn(validationset, labels=None, batch_size=batch_size))
 	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
 	
-	predictfile = open("Results/predictions.txt", "w")
+	predictfile = open("Results/predictions" + file_suffix + ".txt", "w")
 	
+	number_of_matches = 0
+	number_of_validations = 0;
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids'][0]
 		probability = pred_dict['probabilities'][class_id]
 		#print(template.format(expected[class_id], 100 * probability, expec))
 		resultfile.write('\n\r')
-		resultfile.write(template.format(expected[class_id], 100 * probability, expec))
+		resultfile.write(template.format(inverted_label_mapping[expected[class_id]], 100 * probability, inverted_label_mapping[expec]))
+		number_of_validations += 1
 		
 		if str(expected[class_id]) == str(expec):
-			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(expec) + '\n\r')
-	
+			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
+			number_of_matches += 1
+			
+			
+	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))		
 	resultfile.write('\n\r******************************\n\r')
 	resultfile.close()
 	predictfile.close()
