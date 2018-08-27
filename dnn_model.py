@@ -156,7 +156,7 @@ def main(argv):
 	predictfile = open("Results/predictions" + file_suffix + ".txt", "w")
 	
 	number_of_matches = 0
-	number_of_validations = 0;
+	number_of_validations = 0
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids'][0]
 		probability = pred_dict['probabilities'][class_id]
@@ -170,7 +170,9 @@ def main(argv):
 			number_of_matches += 1
 			
 			
-	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))		
+	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
+	predictfile.write('\n\rTotal: ' + str(number_of_validations))
+	predictfile.write('\n\rMatches: ' + str(number_of_matches))
 	resultfile.write('\n\r******************************\n\r')
 	resultfile.close()
 	predictfile.close()
