@@ -71,6 +71,7 @@ def build_frame(directory_data, directory_labels):
 			datelist = repairdatesmapping[row['T_CHASSIS']]
 			dataframe.loc[index, 'valid'] = 1
 			found_chassis += 1
+			print('Found chassis: ' + str(found_chassis))
 			
 			for reapairdate in datelist:
 				datedelta = pandas.to_datetime(reapairdate) - pandas.to_datetime(row['SEND_DATETIME'])
@@ -112,7 +113,7 @@ def check_chassis(directory):
 			datafiles.append(directory + item)
 	
 	for datafile in datafiles:
-		csv_data = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, header=None, index_col=False)
+		csv_data = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, header=0, index_col=False)
 		for index, row in csv_data.iterrows():
 			# Only insert data where truck_id is found in label_mapping
 			chassi = row['T_CHASSIS']
@@ -134,8 +135,34 @@ def check_chassis(directory):
 	doublesframe.to_csv('frame_chassis' + datestring + '.csv', sep=';', index = False, index_label = False)	
 	
 
+def analyse_frame(directory):	
+	
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+	
+	for datafile in datafiles:
+		csv_data = pandas.read_csv(datafile, sep=";", index_col=False)
+	
+	nr_of_rows = 0
+	nr_of_repaired = 0
+	nr_of_valid = 0
+	for index, row in csv_data.iterrows():
+		nr_of_rows += 1
+		if row['valid'] == 1:
+			nr_of_valid += 1
+		if row['repaired'] == 1:
+			nr_of_repaired += 1
+	
+	print('Rows: ' + str(nr_of_rows))
+	print('Valid: ' + str(nr_of_valid))
+	print('Repaired: ' + str(nr_of_repaired))
+	
 
-build_frame('Data/Flatten/', 'Data/Labels/')	
+analyse_frame('Data/Compressed/')	
+
+#build_frame('Data/Flatten/', 'Data/Labels/')	
 	
 #check_chassis('Data/...') #
 
