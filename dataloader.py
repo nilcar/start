@@ -33,6 +33,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	
 	doubles_dict = {}
 	found_doubles = {}
+	dataframe = pandas.DataFrame()
 	
 	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
 	
@@ -60,21 +61,23 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	else:
 		# Read already structured data
 		for datafile in datafiles:
+			print('Reading compressed: ' + datafile)
 			csv_data = pandas.read_csv(datafile, sep=";", index_col=False)
 
 		
 	print('Csv data from file')
-	print(csv_data.head(10))
+	print(csv_data.head())
 	print('Shuffeling around the data randomously')
 	csv_data = csv_data.reindex(numpy.random.permutation(csv_data.index))
 	print('Size of read csv data:' + str(csv_data.size))
 	
 	print('Csv data after shuffeling')
-	print(csv_data.head(10))
+	print(csv_data.head())
+	
 	
 	if not(compressed_data):
 		# Build the target dataframe structure
-		dataframe = pandas.DataFrame()
+		
 		dataframe[truck_type] = []
 		dataframe[truck_id] = []
 		dataframe[truck_date] = []
@@ -121,9 +124,13 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 			except KeyError:
 				# Source label did not exist 
 				invalid_labels += 1
-				#print('Missing label not inserted: ' + index2)
+		
+		dataframe = dataframe.reset_index()
+		#dataframe = csv_data.set_index(list(index_tuple))
+		#print('Missing label not inserted: ' + index2)
 	else:
-		dataframe = csv_data.set_index(list(index_tuple))
+		#dataframe = csv_data.set_index(list(index_tuple))
+		dataframe = csv_data
 		#print(dataframe.head())
 		
 	del doubles_dict
@@ -133,10 +140,10 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		print('Number of accepted labels: ' + str(accepted_labels))
 		print('Number of invalid labels: ' + str(invalid_labels))
 	
-	dataframe = dataframe.reset_index()
+	
 	
 	print('Structured data')
-	print(dataframe.head(10))
+	print(dataframe.head())
 	
 	print('Size of dataframe data with Nan:' + str(dataframe.size))
 	if not(compressed_data):
@@ -147,14 +154,14 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		dataframe.to_csv('Compressed/data_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
 		
-	dataframe = nan_statistics(dataframe)
+	#dataframe = nan_statistics(dataframe)
 	
 	dataframe = exclude_rows_with_nan(dataframe, max_nr_of_nan)
 	print('Size of dataframe where Nan rows excluded:' + str(dataframe.size))
 	
 	dataframe = dataframe.fillna(value = 0.0)
 	print('After filling')
-	print(dataframe.head(10))
+	print(dataframe.head())
 	
 	if fixed_selection:
 
@@ -209,20 +216,20 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		
 		"""
 		
-		
+		"""
 		print('Trainset:')
 		print(trainset.head())
 		print('Testset:')
 		print(testset.head())
 		print('Validationset:')
 		print(validationset.head())
-		
+		"""
 	
 	else:
-		#trainset, testset = train_test_split(dataframe, test_size=0.4)
-		#testset, validationset = train_test_split(testset, test_size=0.5)
-		trainset, testset = train_test_split(dataframe, test_size=0.1)
+		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
+		#trainset, testset = train_test_split(dataframe, test_size=0.1)
+		#testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
 	
 	
@@ -351,7 +358,7 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 		label_data = pandas.read_csv(datafile, sep=";", keep_default_na=False)
 		
 		#print('label structure')
-		#print(label_data.head(10))
+		print(label_data.head())
 		int_representation = 0
 		string_labels = label_data.pop(choosen_label)
 		#print(string_labels)
@@ -367,9 +374,9 @@ def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):
 				int_representation += 1
 	
 	# Sorts the label_mapping by value (int representation)
-	label_mapping = OrderedDict(sorted(label_mapping.items(), key=lambda x: x[1]))
+	#label_mapping = OrderedDict(sorted(label_mapping.items(), key=lambda x: x[1]))
 	
-	#print(label_mapping)		
+	print(label_mapping)		
 	return	label_mapping
 			
 	
