@@ -14,7 +14,7 @@ import sys
 
 def build_frame(directory_data, directory_labels):
 	
-	CSV_COLUMN_NAMES_DATA = ['VEHICL_ID', 'T_CHASSIS','PARAMETER_CODE', 'SEND_DATETIME']
+	CSV_COLUMN_NAMES_DATA = ['VEHICL_ID', 'T_CHASSIS','PARAMETER_CODE', 'truck_date']
 	CSV_COLUMN_NAMES_LABELS = ['VEHICL_ID', 'T_CHASSIS', 'PART_CODE', 'Record_count', 'RepairDate']
 	
 	for y in range(1, 21):
@@ -64,6 +64,8 @@ def build_frame(directory_data, directory_labels):
 	found_chassis = 0
 	found_repaired = 0
 	nr_of_rows = 0
+	exclude_number = 0
+	delete_rows = []
 	
 	for index, row in dataframe.iterrows():
 		nr_of_rows += 1
@@ -74,14 +76,19 @@ def build_frame(directory_data, directory_labels):
 			print('Found chassis: ' + str(found_chassis))
 			
 			for reapairdate in datelist:
-				datedelta = pandas.to_datetime(reapairdate) - pandas.to_datetime(row['SEND_DATETIME'])
+				datedelta = pandas.to_datetime(reapairdate) - pandas.to_datetime(row['truck_date'])
 				days = datedelta.days
 				if days >= 0 and days < 90:
 					dataframe.loc[index, 'repaired'] = 1
 					found_repaired += 1
 					print('Found repaired: ' + str(found_repaired))
 		except KeyError:
-			None
+			exclude_number += 1
+			if exclude_number != 1:
+				delete_rows.append(index)
+				print('deleting index: ' + str(index))
+			if exclude_number > 9:
+				exclude_number = 0
 	
 	"""
 	for index, row in dataframe.iterrows():
@@ -89,6 +96,10 @@ def build_frame(directory_data, directory_labels):
 		if dataframe.loc[index,'repaired'] == 1:
 			print('Repaired inserted')
 	"""
+	print('Dateframe before deletion: ' + str(dataframe.size))
+	print('Deleting rows: ' + str(len(delete_rows)))
+	dataframe = dataframe.drop(delete_rows)
+	print('Dateframe after deletion: ' + str(dataframe.size))
 	
 	print('Chassis total: ' + str(nr_of_rows))
 	print('Chassis found: ' + str(found_chassis))
@@ -152,7 +163,7 @@ def analyse_frame(directory):
 		nr_of_rows += 1
 		if row['valid'] == 1:
 			nr_of_valid += 1
-		if row['repaired'] == 1:
+		if str(row['repaired']) == '1':
 			nr_of_repaired += 1
 	
 	print('Rows: ' + str(nr_of_rows))
