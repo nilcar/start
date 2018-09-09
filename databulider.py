@@ -86,9 +86,24 @@ def build_frame(directory_data, directory_labels):
 			exclude_number += 1
 			if exclude_number != 1:
 				delete_rows.append(index)
-				print('deleting index: ' + str(index))
+				#print('deleting index: ' + str(index))
 			if exclude_number > 9:
 				exclude_number = 0
+	
+	dataframe = dataframe.sort_values(['repaired'], ascending = [False])
+	doubles = {}
+	delete_doubles = []
+	for index, row in dataframe.iterrows():
+		try:
+			double = doubles[row['T_CHASSIS']]
+			double += 1
+			doubles[row['T_CHASSIS']] = double
+			delete_doubles.append(index)
+		except KeyError:
+			doubles[row['T_CHASSIS']] = 1
+		
+	print('Deleting rows: ' + str(len(delete_doubles)))
+	dataframe = dataframe.drop(delete_doubles)
 	
 	"""
 	for index, row in dataframe.iterrows():
@@ -96,9 +111,9 @@ def build_frame(directory_data, directory_labels):
 		if dataframe.loc[index,'repaired'] == 1:
 			print('Repaired inserted')
 	"""
-	print('Dateframe before deletion: ' + str(dataframe.size))
-	print('Deleting rows: ' + str(len(delete_rows)))
-	dataframe = dataframe.drop(delete_rows)
+	#print('Dateframe before deletion: ' + str(dataframe.size))
+	#print('Deleting rows: ' + str(len(delete_rows)))
+	#dataframe = dataframe.drop(delete_rows)
 	print('Dateframe after deletion: ' + str(dataframe.size))
 	
 	print('Chassis total: ' + str(nr_of_rows))
@@ -143,7 +158,7 @@ def check_chassis(directory):
 	
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	doublesframe.to_csv('frame_chassis' + datestring + '.csv', sep=';', index = False, index_label = False)	
+	doublesframe.to_csv('frame_chassis_unique' + datestring + '.csv', sep=';', index = False, index_label = False)	
 	
 
 def analyse_frame(directory):	
@@ -171,7 +186,7 @@ def analyse_frame(directory):
 	print('Repaired: ' + str(nr_of_repaired))
 	
 
-analyse_frame('Data/Compressed/')	
+analyse_frame('Data/ReducedV2/')	
 
 #build_frame('Data/Flatten/', 'Data/Labels/')	
 	
