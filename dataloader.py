@@ -165,6 +165,18 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	
 	if fixed_selection:
 
+		#labelmask = (dataframe[label] == specifics)
+		#dataframe = dataframe.loc[labelmask]
+	
+		labelmasktrain = (dataframe['PARTITIONNING'] == '1_Training')
+		trainset = dataframe.loc[labelmasktrain]
+		labelmasktest = (dataframe['PARTITIONNING'] == '2_Testing')
+		testset = dataframe.loc[labelmasktest]
+		labelmaskvalidate = (dataframe['PARTITIONNING'] == '3_Validation')
+		validationset = dataframe.loc[labelmaskvalidate]
+	
+	
+		"""
 		dataframe = dataframe.set_index('truck_date')
 		dataframe.index = pandas.to_datetime(dataframe.index)
 		
@@ -175,7 +187,7 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		trainset = trainset.reset_index()
 		testset = testset.reset_index()
 		validationset = validationset.reset_index()
-		
+		"""
 		
 		""" DB
 		sql_train = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-01-01' and '2016-05-31'"

@@ -10,6 +10,36 @@ import sys
 
 
 
+def build_frameV3(directory_data):
+	
+	CSV_COLUMN_NAMES_DATA = ['VEHICL_ID', 'T_CHASSIS','PARAMETER_CODE']
+	
+	for y in range(1, 21):
+		for x in range(1, 21):
+			column = str(y) + '_' + str(x)
+			CSV_COLUMN_NAMES_DATA.append(column)
+	
+	CSV_COLUMN_NAMES_DATA.append('Send_Date')
+	CSV_COLUMN_NAMES_DATA.append('All_Fault')
+	CSV_COLUMN_NAMES_DATA.append('All_Fault_in_3_months')
+	CSV_COLUMN_NAMES_DATA.append('PARTITIONNING')
+	
+	print(len(CSV_COLUMN_NAMES_DATA))
+	
+	
+	
+	datafiles = []
+	for item in listdir(directory_data): 
+		if isfile(join(directory_data, item)):
+			datafiles.append(directory_data + item)
+	
+	dataframe = pandas.DataFrame()
+	for datafile in datafiles:
+		csv_data = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES_DATA, header=0, index_col=False)
+
+	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
+	datestring = datestring.replace(':', '-')
+	csv_data.to_csv('data_frameV3--' + datestring + '.csv', sep=';', index = False, index_label = False)
 
 
 def build_frame(directory_data, directory_labels):
@@ -86,24 +116,9 @@ def build_frame(directory_data, directory_labels):
 			exclude_number += 1
 			if exclude_number != 1:
 				delete_rows.append(index)
-				#print('deleting index: ' + str(index))
+				print('deleting index: ' + str(index))
 			if exclude_number > 9:
 				exclude_number = 0
-	
-	dataframe = dataframe.sort_values(['repaired'], ascending = [False])
-	doubles = {}
-	delete_doubles = []
-	for index, row in dataframe.iterrows():
-		try:
-			double = doubles[row['T_CHASSIS']]
-			double += 1
-			doubles[row['T_CHASSIS']] = double
-			delete_doubles.append(index)
-		except KeyError:
-			doubles[row['T_CHASSIS']] = 1
-		
-	print('Deleting rows: ' + str(len(delete_doubles)))
-	dataframe = dataframe.drop(delete_doubles)
 	
 	"""
 	for index, row in dataframe.iterrows():
@@ -111,9 +126,9 @@ def build_frame(directory_data, directory_labels):
 		if dataframe.loc[index,'repaired'] == 1:
 			print('Repaired inserted')
 	"""
-	#print('Dateframe before deletion: ' + str(dataframe.size))
-	#print('Deleting rows: ' + str(len(delete_rows)))
-	#dataframe = dataframe.drop(delete_rows)
+	print('Dateframe before deletion: ' + str(dataframe.size))
+	print('Deleting rows: ' + str(len(delete_rows)))
+	dataframe = dataframe.drop(delete_rows)
 	print('Dateframe after deletion: ' + str(dataframe.size))
 	
 	print('Chassis total: ' + str(nr_of_rows))
@@ -158,7 +173,7 @@ def check_chassis(directory):
 	
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	doublesframe.to_csv('frame_chassis_unique' + datestring + '.csv', sep=';', index = False, index_label = False)	
+	doublesframe.to_csv('frame_chassis' + datestring + '.csv', sep=';', index = False, index_label = False)	
 	
 
 def analyse_frame(directory):	
@@ -186,9 +201,11 @@ def analyse_frame(directory):
 	print('Repaired: ' + str(nr_of_repaired))
 	
 
-analyse_frame('Data/ReducedV2/')	
+#analyse_frame('Data/Compressed/')	
 
 #build_frame('Data/Flatten/', 'Data/Labels/')	
+
+build_frameV3('Data/ReducedV3_org/')
 	
 #check_chassis('Data/...') #
 
