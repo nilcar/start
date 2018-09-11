@@ -12,6 +12,8 @@ from os import listdir
 from os.path import isfile, join
 import datetime
 import sys
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
 
 import dataloader
 
@@ -131,7 +133,7 @@ def main(argv):
 	classifier = tensorflow.estimator.DNNClassifier \
 		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping))
 	#classifier = tensorflow.estimator.DNNClassifier \
-	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Saved_model')
+	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Volvo_model')
 	
     ### Train the Model.
 	print('\nModel training\n\r\n\r\n')
@@ -157,6 +159,9 @@ def main(argv):
 	
 	number_of_matches = 0
 	number_of_validations = 0
+	y_true = []
+	y_predicted = []
+	
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids'][0]
 		probability = pred_dict['probabilities'][class_id]
@@ -164,12 +169,28 @@ def main(argv):
 		resultfile.write('\n\r')
 		resultfile.write(template.format(inverted_label_mapping[expected[class_id]], 100 * probability, inverted_label_mapping[expec]))
 		number_of_validations += 1
+		y_true.append(expec)
+		y_predicted.append(expected[class_id])
 		
 		if str(expected[class_id]) == str(expec):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
 			number_of_matches += 1
 			
-			
+	matrix = confusion_matrix(y_true, y_predicted)
+	print(matrix)
+
+	"""
+	plt.imshow(matrix, cmap=plt.cm.Blues) # origin='lower' interpolation='nearest'
+	plt.colorbar()
+	plt.title("Confusion Matrix")
+	tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+	plt.xlabel('Predicted')
+	plt.ylabel('True')
+	plt.savefig("Confusion-matrix-" + file_suffix + ".png")
+	"""
+	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))
 	predictfile.write('\n\rMatches: ' + str(number_of_matches))
