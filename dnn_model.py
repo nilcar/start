@@ -161,6 +161,7 @@ def main(argv):
 	number_of_validations = 0
 	y_true = []
 	y_predicted = []
+	my_matrix = [[0,0],[0,0]]
 	
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids'][0]
@@ -169,15 +170,20 @@ def main(argv):
 		resultfile.write('\n\r')
 		resultfile.write(template.format(inverted_label_mapping[expected[class_id]], 100 * probability, inverted_label_mapping[expec]))
 		number_of_validations += 1
-		y_true.append(expec)
-		y_predicted.append(expected[class_id])
+		y_true.append(inverted_label_mapping[expec])
+		y_predicted.append(inverted_label_mapping[expected[class_id]])
+		my_matrix[expec][expected[class_id]] += 1
 		
 		if str(expected[class_id]) == str(expec):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
 			number_of_matches += 1
-			
-	matrix = confusion_matrix(y_true, y_predicted)
+		#else:
+		#	print('No match')
+
+		
+	matrix = confusion_matrix(y_true, y_predicted, labels=[0,1])
 	print(matrix)
+	#print(my_matrix)
 
 	"""
 	plt.imshow(matrix, cmap=plt.cm.Blues) # origin='lower' interpolation='nearest'
