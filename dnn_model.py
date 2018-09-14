@@ -32,7 +32,7 @@ parser.add_argument('--data_path', default='Compressed/', type=str, help='path t
 parser.add_argument('--compressed_data', default='True', type=str, help='if true structured data will be used only one file false means data source files and a structured file will be produced')
 parser.add_argument('--max_nr_nan', default=0, type=int, help='number of nan per row for exclusion')
 parser.add_argument('--fixed_selection', default='True', type=str, help='If true selection is done by truck_date')
-
+parser.add_argument('--suffix', default='', type=str, help='To separate result filenames')
 
 
 def main(argv):
@@ -70,7 +70,7 @@ def main(argv):
 	label_path = args.label_path # 'Labels/'
 	data_path = args.data_path # 'Data_original/' # 'Data_original/' 'Testdata/'
 	
-	file_suffix = '-' + choosen_label + '-' + args.hidden_units + '-' + str(args.train_steps)
+	file_suffix = '-' + choosen_label + '-' + args.hidden_units + '-' + str(args.train_steps) + '-' + args.suffix
 	
 	
 	#structured_data_path = 'Compressed/Compressed_valid_all_labels/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
@@ -103,6 +103,17 @@ def main(argv):
 	
 	#Get three structured separate dataframes from data sources
 	trainframe, testframe, validationframe = dataloader.loadData(data_path, compressed_data, label_mapping, max_nr_nan, fixed_selection)
+	
+	frameinfo = dataloader.analyse_frame(trainframe)
+	resultfile.write('\n\rTrainframe:\n\r')
+	resultfile.write(frameinfo)
+	frameinfo = dataloader.analyse_frame(testframe)
+	resultfile.write('\n\r\n\rTestframe:\n\r')
+	resultfile.write(frameinfo)
+	frameinfo = dataloader.analyse_frame(validationframe)
+	resultfile.write('\n\r\n\rValidationframe:\n\r')
+	resultfile.write(frameinfo)
+	
 	
 	# Train model data
 	trainset, labels_training, label_mapping, int_labels_train = \
@@ -141,8 +152,8 @@ def main(argv):
 	classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
 
 	### Test the model
-	print('\n\rModel testing\n\n\n')
-	resultfile.write('\nModel testing\n\r\n\r\n')
+	print('\n\r\n\rModel testing\n\n\n')
+	resultfile.write('\n\r\n\rModel testing\n\r')
 	# Evaluate the model.
 	eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
 	print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
@@ -150,7 +161,7 @@ def main(argv):
 	
 	### Evaluate the model
 	print('\nModel evaluation\n\n\n')
-	resultfile.write('\n\rModel evaluation\n\r\n\r\n')
+	resultfile.write('\n\rModel evaluation\n\r\n')
 	expected = list(int_labels_validate) #list(label_mapping.keys())
 	predictions = classifier.predict(input_fn=lambda:dataloader.eval_input_fn(validationset, labels=None, batch_size=batch_size))
 	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
@@ -161,7 +172,6 @@ def main(argv):
 	number_of_validations = 0
 	y_true = []
 	y_predicted = []
-	my_matrix = [[0,0],[0,0]]
 	
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids'][0]
@@ -172,7 +182,6 @@ def main(argv):
 		number_of_validations += 1
 		y_true.append(inverted_label_mapping[expec])
 		y_predicted.append(inverted_label_mapping[expected[class_id]])
-		my_matrix[expec][expected[class_id]] += 1
 		
 		if str(expected[class_id]) == str(expec):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
@@ -180,22 +189,10 @@ def main(argv):
 		#else:
 		#	print('No match')
 
-		
-	matrix = confusion_matrix(y_true, y_predicted, labels=[0,1])
-	print(matrix)
-	#print(my_matrix)
-
-	"""
-	plt.imshow(matrix, cmap=plt.cm.Blues) # origin='lower' interpolation='nearest'
-	plt.colorbar()
-	plt.title("Confusion Matrix")
-	tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-	plt.xlabel('Predicted')
-	plt.ylabel('True')
-	plt.savefig("Confusion-matrix-" + file_suffix + ".png")
-	"""
+	#print(list(label_mapping.keys()))	
+	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys())) # labels=[0,1]
+	print(confusion_matrix_result)
+	dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))

@@ -10,6 +10,8 @@ import sys
 from sklearn.model_selection import train_test_split
 import tensorflow
 from collections import OrderedDict
+import matplotlib.pyplot as plt
+import itertools
 #import mysql.connector
 #from tensorflow.python.data import Dataset
 
@@ -164,10 +166,8 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	print(dataframe.head())
 	
 	if fixed_selection:
-
-		#labelmask = (dataframe[label] == specifics)
-		#dataframe = dataframe.loc[labelmask]
 	
+		## For V3
 		labelmasktrain = (dataframe['PARTITIONNING'] == '1_Training')
 		trainset = dataframe.loc[labelmasktrain]
 		labelmasktest = (dataframe['PARTITIONNING'] == '2_Testing')
@@ -238,8 +238,43 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		"""
 	
 	else:
+
+		
+		"""
+		trainset = pandas.DataFrame()
+		testset = pandas.DataFrame()
+		validationset = pandas.DataFrame()		
+	
+		labelmask_healthy = (dataframe['repaired'] == 0)
+		labelmask_not_healthy = (dataframe['repaired'] == 1)
+		healthy_frame = dataframe.loc[labelmask_healthy]
+		healthy_frame = healthy_frame.reindex(numpy.random.permutation(healthy_frame.index))
+		not_healthy_frame = dataframe.loc[labelmask_not_healthy]
+		not_healthy_frame = not_healthy_frame.reindex(numpy.random.permutation(not_healthy_frame.index))
+		
+		train_healthy, rest = train_test_split(healthy_frame, test_size=0.4)
+		test_healthy, validate_healthy = train_test_split(rest, test_size=0.5)
+		
+		train_not_healthy, rest_ = train_test_split(not_healthy_frame, test_size=0.4)
+		test_not_healthy, validate_not_healthy = train_test_split(rest_, test_size=0.5)
+		
+		trainset = trainset.append(train_healthy, ignore_index=True)
+		trainset = trainset.append(train_not_healthy, ignore_index=True)
+		
+		testset = testset.append(test_healthy, ignore_index=True)
+		testset = testset.append(test_not_healthy, ignore_index=True)
+		
+		validationset = validationset.append(validate_healthy, ignore_index=True)
+		validationset = validationset.append(validate_not_healthy, ignore_index=True)
+		
+		#validationset.to_csv('data_frame_validation_V2_2.csv', sep=';', index = False, index_label = False)
+		"""
+		
+		
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
+		
+		
 		#trainset, testset = train_test_split(dataframe, test_size=0.1)
 		#testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
@@ -501,6 +536,65 @@ def add_labels_to_structure(structure_directory, labels_directory):
 	
 	return structured_data
 
+def print_cm(confusion_matrix, labels, filesuffix):	
+	
+	if len(labels) == 2:
+		classesy = ['Healthy', 'Not healthy']
+		classesx = ['Healthy', 'Not healthy']
+	else:
+		classesy = labels
+		classesx = labels
+
+	plt.figure()
+	plt.imshow(confusion_matrix, cmap=plt.cm.Blues) # origin='lower' interpolation='nearest'
+	plt.colorbar()
+	plt.title("Confusion Matrix V1")
+	tick_marks = numpy.arange(len(labels)) #numpy.arange(2)
+	plt.xticks(tick_marks, classesx, rotation=45)
+	plt.yticks(tick_marks, classesy)
+	thresh = confusion_matrix.max() / 2
+	for i, j in itertools.product(range(confusion_matrix.shape[0]), range(confusion_matrix.shape[1])):
+		plt.text(j, i, format(confusion_matrix[i, j], 'd'), horizontalalignment="center", color="white" if confusion_matrix[i, j] > thresh else "black")
+	plt.tight_layout()
+	plt.xlabel('Predicted')
+	plt.ylabel('True')
+	#plt.show()
+	plt.savefig('Results/Confusion-matrix-' + filesuffix + '.png')
+	plt.clf()
+	
+	
+def analyse_frame(dataframe):	
+	
+	resultstring = ''
+	nr_of_rows = 0
+	nr_of_repaired = 0
+	nr_of_valid = 0
+	for index, row in dataframe.iterrows():
+		nr_of_rows += 1
+		try:
+			if row['valid'] == 1:
+				nr_of_valid += 1
+		except:
+			None
+		if str(row['repaired']) == '1':
+			nr_of_repaired += 1
+	
+	
+	resultstring += '\n\rRows: ' + str(nr_of_rows)
+	resultstring += '\n\rValid: ' + str(nr_of_valid)
+	resultstring += '\n\rRepaired: ' + str(nr_of_repaired)
+	
+	"""
+	print('Rows: ' + str(nr_of_rows))
+	print('Valid: ' + str(nr_of_valid))
+	print('Repaired: ' + str(nr_of_repaired))
+	"""
+	
+	return resultstring
+
+
+	
+	
 	
 #get_data_source_labels('Data_original/')		
 #get_valid_labels('Labels/')
