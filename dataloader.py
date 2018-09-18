@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 import tensorflow
 from collections import OrderedDict
 import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc
 import itertools
 #import mysql.connector
 #from tensorflow.python.data import Dataset
@@ -270,18 +271,21 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		#validationset.to_csv('data_frame_validation_V2_2.csv', sep=';', index = False, index_label = False)
 		"""
 		
-		
+		# V1
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
 		
+		# V2
+		#trainset, testset, validationset = unique_selection(dataframe)
 		
 		#trainset, testset = train_test_split(dataframe, test_size=0.1)
 		#testset, validationset = train_test_split(testset, test_size=0.5)
 	del dataframe
 	
 	
+	print('Trainset')
+	print(trainset.head())
 	"""
-	#print(trainset.head())
 	print(trainset.size)
 	#print(testset.head())
 	print(testset.size)
@@ -592,8 +596,89 @@ def analyse_frame(dataframe):
 	
 	return resultstring
 
+def unique_selection(dataframe):
 
+	train = {}
+	test = {}
+	validate = {}
+	selector = 0
+	df_columns = dataframe.columns
+	trainframe = pandas.DataFrame([], columns=df_columns)
+	testframe = pandas.DataFrame([], columns=df_columns)
+	validateframe = pandas.DataFrame([], columns=df_columns)
+	tempframe = pandas.DataFrame()
+	rownr = 0
 	
+
+	for index, row in dataframe.iterrows():
+		if selector >= 3:
+			selector = 0
+
+		rownr += 1
+		print('Row:' + str(rownr))
+			
+		try:
+			value = train[row['T_CHASSIS']]
+			tempframe = pandas.DataFrame([row.values], columns=df_columns)
+			trainframe = trainframe.append(tempframe, ignore_index=True)
+			continue
+		except:
+			None
+	
+		try:
+			value = test[row['T_CHASSIS']]
+			tempframe = pandas.DataFrame([row.values], columns=df_columns)
+			testframe = testframe.append(tempframe, ignore_index=True)
+			continue
+		except:
+			None
+			
+		try:
+			value = validate[row['T_CHASSIS']]
+			tempframe = pandas.DataFrame([row.values], columns=df_columns)
+			validateframe = validateframe.append(tempframe, ignore_index=True)
+			continue
+		except:
+			None
+	
+		if selector == 0:
+			train[row['T_CHASSIS']] = 1
+			tempframe = pandas.DataFrame([row.values], columns=df_columns)
+			trainframe = trainframe.append(tempframe, ignore_index=True)
+	
+		if selector == 1:
+			test[row['T_CHASSIS']] = 1
+			tempframe = pandas.DataFrame([row.values], columns=df_columns)
+			testframe = testframe.append(tempframe, ignore_index=True)
+			
+		if selector == 2:
+			validate[row['T_CHASSIS']] = 1
+			tempframe = pandas.DataFrame([row.values], columns=df_columns)
+			validateframe = validateframe.append(tempframe, ignore_index=True)
+	
+		selector += 1
+	
+	return trainframe, testframe, validateframe
+	
+def print_roc_curve(y_true, y_prob, labels, filesuffix):
+
+	fpr, tpr, _ = roc_curve(y_true, y_prob, pos_label=1)
+	roc_auc = auc(fpr, tpr)
+	fpr_, tpr_, _ = roc_curve(y_true, y_prob, pos_label=0)
+	roc_auc_ = auc(fpr_, tpr_)
+	
+	plt.figure()
+	plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve unhealthy (area = %0.2f)' % roc_auc)
+	#plt.plot(fpr_, tpr_, color='red', lw=2, label='ROC curve healthy (area = %0.2f)' % roc_auc_)
+	plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+	plt.xlim([0.0, 1.0])
+	plt.ylim([0.0, 1.05])
+	plt.xlabel('False Positive Rate')
+	plt.ylabel('True Positive Rate')
+	plt.title('Receiver operating characteristic example')
+	plt.legend(loc="lower right")
+	plt.savefig('Results/ROC_curve-' + filesuffix + '.png')
+
 	
 	
 #get_data_source_labels('Data_original/')		

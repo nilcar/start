@@ -6,6 +6,7 @@ from __future__ import print_function
 
 
 import pandas
+import numpy
 import tensorflow
 import argparse
 from os import listdir
@@ -172,6 +173,7 @@ def main(argv):
 	number_of_validations = 0
 	y_true = []
 	y_predicted = []
+	y_probability = []
 	
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids'][0]
@@ -182,8 +184,9 @@ def main(argv):
 		number_of_validations += 1
 		y_true.append(inverted_label_mapping[expec])
 		y_predicted.append(inverted_label_mapping[expected[class_id]])
+		y_probability.append(probability)
 		
-		if str(expected[class_id]) == str(expec):
+		if str(inverted_label_mapping[expected[class_id]]) == str(inverted_label_mapping[expec]):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
 			number_of_matches += 1
 		#else:
@@ -193,6 +196,7 @@ def main(argv):
 	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys())) # labels=[0,1]
 	print(confusion_matrix_result)
 	dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
+	dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), list(label_mapping.keys()), file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))
