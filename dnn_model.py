@@ -141,11 +141,13 @@ def main(argv):
 	# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
 	# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
 	# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
+	optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.1)
+	# optimizer = 'Adagrad'
 	
 	classifier = tensorflow.estimator.DNNClassifier \
-		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping))
+		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), batch_norm=False, optimizer=optimizer, model_dir='/data/Tensorflow/' + file_suffix) # , batch_norm=True ,optimizer=optimizer
 	#classifier = tensorflow.estimator.DNNClassifier \
-	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Volvo_model')
+	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Volvo_model', batch_norm=True, optimizer=optimizer)
 	
     ### Train the Model.
 	print('\nModel training\n\r\n\r\n')
@@ -156,9 +158,42 @@ def main(argv):
 	print('\n\r\n\rModel testing\n\n\n')
 	resultfile.write('\n\r\n\rModel testing\n\r')
 	# Evaluate the model.
+	
+	
+	"""
+	single_label = []
+	true_labels = []
+	for value in int_labels_test:
+		single_label.append(value)
+		true_labels.append(inverted_label_mapping[value])
+
+	df_columns = testset.columns
+	singleframe = pandas.DataFrame()
+	index_label = 0
+	accuracy = []
+	for index, row in testset.iterrows():
+		singleframe = pandas.DataFrame([row.values], columns=df_columns)
+		label = pandas.Series([single_label[index_label]])
+		eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(singleframe, label, batch_size))
+		accuracy.append(eval_result['accuracy'])
+		index_label += 1
+	
+	dataloader.print_roc_curve(numpy.array(true_labels), numpy.array(accuracy), list(label_mapping.keys()), file_suffix + '_test')
+	total_accuray = 0
+	for value in accuracy:
+		total_accuray += value
+	print('Test set accuracy:' + str(total_accuray / len(accuracy)))
+	resultfile.write('\n\rTest set accuracy: ' + str(total_accuray / len(accuracy)))
+	"""
+	
+	
+	
 	eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
 	print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 	resultfile.write('\n\rTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+	resultfile.write('\n\rEval result:\n\r' + str(eval_result))
+	
+	
 	
 	### Evaluate the model
 	print('\nModel evaluation\n\n\n')

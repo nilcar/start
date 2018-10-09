@@ -271,11 +271,11 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		#validationset.to_csv('data_frame_validation_V2_2.csv', sep=';', index = False, index_label = False)
 		"""
 		
-		# V1
+		#V1
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
 		
-		# V2
+		#V2
 		#trainset, testset, validationset = unique_selection(dataframe)
 		
 		#trainset, testset = train_test_split(dataframe, test_size=0.1)
@@ -552,7 +552,7 @@ def print_cm(confusion_matrix, labels, filesuffix):
 	plt.figure()
 	plt.imshow(confusion_matrix, cmap=plt.cm.Blues) # origin='lower' interpolation='nearest'
 	plt.colorbar()
-	plt.title("Confusion Matrix V1")
+	plt.title("Confusion Matrix")
 	tick_marks = numpy.arange(len(labels)) #numpy.arange(2)
 	plt.xticks(tick_marks, classesx, rotation=45)
 	plt.yticks(tick_marks, classesy)
@@ -675,7 +675,7 @@ def print_roc_curve(y_true, y_prob, labels, filesuffix):
 	plt.ylim([0.0, 1.05])
 	plt.xlabel('False Positive Rate')
 	plt.ylabel('True Positive Rate')
-	plt.title('Receiver operating characteristic example')
+	plt.title('Receiver operating characteristic')
 	plt.legend(loc="lower right")
 	plt.savefig('Results/ROC_curve-' + filesuffix + '.png')
 
