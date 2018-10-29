@@ -391,7 +391,33 @@ def eval_input_fn(features, labels, batch_size):
 		return dataset.make_one_shot_iterator().get_next() #for 1.4
 
 		
+def getFoldFrame(foldframe_list, kfolds, foldframe):
+
+	if kfolds == 1:
+		foldframe_list.append(foldframe)
+	else:
+		trainframe, restframe = train_test_split(foldframe, train_size= (1 / kfolds))
+		foldframe_list.append(trainframe)
+		getFoldFrame(foldframe_list, kfolds - 1, restframe)
+
+	return 	foldframe_list
 		
+		
+
+def getFoldTrainFrames(foldframe_list, testindex):
+	
+	foldtrainframe = pandas.DataFrame()
+	foldtestframe = pandas.DataFrame()
+	
+	for index in range(len(foldframe_list)):
+		if index == testindex:
+			foldtestframe = foldtestframe.append(foldframe_list[index])
+		else:
+			foldtrainframe = foldtrainframe.append(foldframe_list[index])
+		
+	return foldtrainframe, foldtestframe
+
+	
 		
 	# Get label_mapping dictionary for choosen label
 def get_valid_labels(directory, choosen_label = 'T_CHASSIS'):	

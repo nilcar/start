@@ -72,7 +72,8 @@ def main(argv):
 	data_path = args.data_path # 'Data_original/' # 'Data_original/' 'Testdata/'
 	
 	file_suffix = '-' + choosen_label + '-' + args.hidden_units + '-' + str(args.train_steps) + '-' + args.suffix
-	
+	dropout = None
+	kfolds = 5
 	
 	#structured_data_path = 'Compressed/Compressed_valid_all_labels/' # 'Compressed_valid_chassis' Compressed/Compressed_single/
 	
@@ -105,93 +106,149 @@ def main(argv):
 	#Get three structured separate dataframes from data sources
 	trainframe, testframe, validationframe = dataloader.loadData(data_path, compressed_data, label_mapping, max_nr_nan, fixed_selection)
 	
-	frameinfo = dataloader.analyse_frame(trainframe)
-	resultfile.write('\n\rTrainframe:\n\r')
-	resultfile.write(frameinfo)
-	frameinfo = dataloader.analyse_frame(testframe)
-	resultfile.write('\n\r\n\rTestframe:\n\r')
-	resultfile.write(frameinfo)
-	frameinfo = dataloader.analyse_frame(validationframe)
-	resultfile.write('\n\r\n\rValidationframe:\n\r')
-	resultfile.write(frameinfo)
+	if kfolds <= 1:
 	
+		frameinfo = dataloader.analyse_frame(trainframe)
+		resultfile.write('\n\rTrainframe:\n\r')
+		resultfile.write(frameinfo)
+		frameinfo = dataloader.analyse_frame(testframe)
+		resultfile.write('\n\r\n\rTestframe:\n\r')
+		resultfile.write(frameinfo)
+		frameinfo = dataloader.analyse_frame(validationframe)
+		resultfile.write('\n\r\n\rValidationframe:\n\r')
+		resultfile.write(frameinfo)
 	
-	# Train model data
-	trainset, labels_training, label_mapping, int_labels_train = \
-		dataloader.get_model_data(trainframe, label_mapping, choosen_label)
-	
-	# Test model data
-	testset, labels_test, label_mapping, int_labels_test = \
-		dataloader.get_model_data(testframe, label_mapping, choosen_label)
-	
-	# Validate model data
-	validationset, labels_validate, label_mapping, int_labels_validate = \
-		dataloader.get_model_data(validationframe, label_mapping, choosen_label)
-	
-	### Model training
-	my_feature_columns = []
-	for key in trainset.keys():
-		my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
+		# Train model data
+		trainset, labels_training, label_mapping, int_labels_train = \
+			dataloader.get_model_data(trainframe, label_mapping, choosen_label)
+		
+		# Test model data
+		testset, labels_test, label_mapping, int_labels_test = \
+			dataloader.get_model_data(testframe, label_mapping, choosen_label)
+		
+		# Validate model data
+		validationset, labels_validate, label_mapping, int_labels_validate = \
+			dataloader.get_model_data(validationframe, label_mapping, choosen_label)
+		
+		### Model training
+		my_feature_columns = []
+		for key in trainset.keys():
+			my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
 
-	# The model must choose between x classes.
-	print('Number of unique labels, n_classes: ' + str(len(label_mapping)))
-	#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
-	
-	# optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ?
-	# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
-	# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
-	# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
-	optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.1)
-	# optimizer = 'Adagrad'
-	
-	classifier = tensorflow.estimator.DNNClassifier \
-		(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), batch_norm=False, optimizer=optimizer, model_dir='/data/Tensorflow/' + file_suffix) # , batch_norm=True ,optimizer=optimizer
-	#classifier = tensorflow.estimator.DNNClassifier \
-	#	(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), model_dir='Volvo_model', batch_norm=True, optimizer=optimizer)
-	
-    ### Train the Model.
-	print('\nModel training\n\r\n\r\n')
-	#resultfile.write('\nModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\n')
-	classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
+		# The model must choose between x classes.
+		print('Number of unique labels, n_classes: ' + str(len(label_mapping)))
+		#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
+		
+		# optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ?
+		# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
+		# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
+		# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
+		optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.001)
+		#optimizer = 'Adagrad'
+		
+		classifier = tensorflow.estimator.DNNClassifier \
+			(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), dropout=dropout, batch_norm=False, optimizer=optimizer, model_dir='/data/Tensorflow/' + file_suffix) # , batch_norm=True ,optimizer=optimizer
+		
+		### Train the Model.
+		print('\nModel training\n\r\n\r\n')
+		#resultfile.write('\nModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\n')
+		classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
 
-	### Test the model
-	print('\n\r\n\rModel testing\n\n\n')
-	resultfile.write('\n\r\n\rModel testing\n\r')
-	# Evaluate the model.
+		### Test the model
+		print('\n\r\n\rModel testing\n\n\n')
+		resultfile.write('\n\r\n\rModel testing\n\r')
+		# Evaluate the model.
+		
+		eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
+		print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+		resultfile.write('\n\rTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+		resultfile.write('\n\rEval result:\n\r' + str(eval_result))
+		
+	else:
 	
+		foldframe = trainframe.append(testframe)
+		foldtrainframe = pandas.DataFrame()
+		foldtestframe = pandas.DataFrame()
+		foldframe_list = []
 	
-	"""
-	single_label = []
-	true_labels = []
-	for value in int_labels_test:
-		single_label.append(value)
-		true_labels.append(inverted_label_mapping[value])
+		foldframe_list = dataloader.getFoldFrame(foldframe_list, kfolds, foldframe)
+	
+		#print('Foldframe_list: ' + str(len(foldframe_list)))
+		#print(foldframe_list[0].head())
+		
+		frameinfo = dataloader.analyse_frame(validationframe)
+		resultfile.write('\n\r\n\rValidationframe:\n\r')
+		resultfile.write(frameinfo)
+		
+		# Validate model data
+		validationset, labels_validate, label_mapping, int_labels_validate = \
+			dataloader.get_model_data(validationframe, label_mapping, choosen_label)
+		
+		#sys.exit()
+		
+		testresults = []
+	
+		for testindex in range(kfolds):
+	
+			foldtrainframe, foldtestframe = dataloader.getFoldTrainFrames(foldframe_list, testindex)
+			#print('Trainsize: ' + str(foldtrainframe.size))
+			#print('Trainsize: ' + str(foldtestframe.size))
+		
+			frameinfo = dataloader.analyse_frame(foldtrainframe)
+			resultfile.write('\n\rTrainframe:\n\r')
+			resultfile.write(frameinfo)
+			frameinfo = dataloader.analyse_frame(foldtestframe)
+			resultfile.write('\n\r\n\rTestframe:\n\r')
+			resultfile.write(frameinfo)
+		
+			# Train model data
+			trainset, labels_training, label_mapping, int_labels_train = \
+				dataloader.get_model_data(foldtrainframe, label_mapping, choosen_label)
+			
+			# Test model data
+			testset, labels_test, label_mapping, int_labels_test = \
+				dataloader.get_model_data(foldtestframe, label_mapping, choosen_label)
+			
+			### Model training
+			my_feature_columns = []
+			for key in trainset.keys():
+				my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
 
-	df_columns = testset.columns
-	singleframe = pandas.DataFrame()
-	index_label = 0
-	accuracy = []
-	for index, row in testset.iterrows():
-		singleframe = pandas.DataFrame([row.values], columns=df_columns)
-		label = pandas.Series([single_label[index_label]])
-		eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(singleframe, label, batch_size))
-		accuracy.append(eval_result['accuracy'])
-		index_label += 1
+			# The model must choose between x classes.
+			print('Number of unique labels, n_classes: ' + str(len(label_mapping)))
+			#print('Number of unique trucks, n_classes: ' + str(int_labels.size))
+			
+			# optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ?
+			# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
+			# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
+			# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
+			optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.001)
+			#optimizer = 'Adagrad'
+			
+			classifier = tensorflow.estimator.DNNClassifier \
+				(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), dropout=dropout, batch_norm=False, optimizer=optimizer, model_dir='/data/Tensorflow/' + file_suffix) # , batch_norm=True ,optimizer=optimizer
+			
+			### Train the Model.
+			print('\nModel training\n\r\n\r\n')
+			classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
+
+			### Test the model
+			print('\n\r\n\rModel testing\n\n\n')
+			resultfile.write('\n\r\n\rModel testing\n\r')
+			
+			eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
+			print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+			resultfile.write('\n\rK-fold:' + str(testindex + 1))
+			resultfile.write('\n\rTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+			resultfile.write('\n\rEval result:\n\r' + str(eval_result))
+			testresults.append(eval_result['accuracy'])
 	
-	dataloader.print_roc_curve(numpy.array(true_labels), numpy.array(accuracy), list(label_mapping.keys()), file_suffix + '_test')
-	total_accuray = 0
-	for value in accuracy:
-		total_accuray += value
-	print('Test set accuracy:' + str(total_accuray / len(accuracy)))
-	resultfile.write('\n\rTest set accuracy: ' + str(total_accuray / len(accuracy)))
-	"""
+		average = 0.0
+		for value in testresults:
+			average += value
+		
+		resultfile.write('\n\rAverage testresult:' + str(average / len(testresults)))
 	
-	
-	
-	eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
-	print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
-	resultfile.write('\n\rTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
-	resultfile.write('\n\rEval result:\n\r' + str(eval_result))
 	
 	
 	
