@@ -9,7 +9,80 @@ from os.path import isfile, join
 import sys
 
 
+def build_frameUpsample(directory):
 
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+	
+	for datafile in datafiles:
+		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
+	
+	dataframe = dataframe.reindex(numpy.random.permutation(dataframe.index))
+	dataframe = dataframe.sort_values(['repaired'], ascending = [False])
+	
+	delete_rows = []
+	nr_valid = 0
+	row_nr = 1
+	doubleframe = pandas.DataFrame()
+	df_columns = dataframe.columns
+	
+	for index, row in dataframe.iterrows():
+	
+		print('Row: ' + str(row_nr))
+		if row['repaired'] == 1:
+			tempframe = pandas.DataFrame([row.values], columns=df_columns)
+			doubleframe = doubleframe.append(tempframe, ignore_index=True)
+			doubleframe = doubleframe.append(tempframe, ignore_index=True)
+			nr_valid += 1
+		if row['repaired'] == 0 and nr_valid > 0:
+			nr_valid -= 1
+		if row['repaired'] == 0 and nr_valid <= 0:
+			delete_rows.append(index)
+		row_nr += 1
+	
+	dataframe = dataframe.drop(delete_rows)
+	dataframe = dataframe.append(doubleframe, ignore_index=True)
+	
+	print('Deleted rows:' + str(len(delete_rows)))
+	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
+	datestring = datestring.replace(':', '-')
+	dataframe.to_csv('data_frameUpsample--' + datestring + '.csv', sep=';', index = False, index_label = False)	
+
+def build_frameV1(directory):
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+	
+	for datafile in datafiles:
+		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
+	
+	dataframe = dataframe.reindex(numpy.random.permutation(dataframe.index))
+	dataframe = dataframe.sort_values(['repaired'], ascending = [False])
+	
+	delete_rows = []
+	nr_valid = 0
+	row_nr = 1
+	for index, row in dataframe.iterrows():
+	
+		print('Row: ' + str(row_nr))
+		if row['repaired'] == 1:
+			nr_valid += 1
+		if row['repaired'] == 0 and nr_valid > 0:
+			nr_valid -= 1
+		if row['repaired'] == 0 and nr_valid <= 0:
+			delete_rows.append(index)
+		row_nr += 1
+	
+	dataframe = dataframe.drop(delete_rows)
+	print('Deleted rows:' + str(len(delete_rows)))
+	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
+	datestring = datestring.replace(':', '-')
+	dataframe.to_csv('data_frameV1--' + datestring + '.csv', sep=';', index = False, index_label = False)	
+	
 def build_frameV3(directory_data):
 	
 	CSV_COLUMN_NAMES_DATA = ['VEHICL_ID', 'T_CHASSIS','PARAMETER_CODE']
@@ -128,7 +201,7 @@ def build_frame(directory_data, directory_labels):
 	"""
 	print('Dateframe before deletion: ' + str(dataframe.size))
 	print('Deleting rows: ' + str(len(delete_rows)))
-	dataframe = dataframe.drop(delete_rows)
+	#dataframe = dataframe.drop(delete_rows)
 	print('Dateframe after deletion: ' + str(dataframe.size))
 	
 	print('Chassis total: ' + str(nr_of_rows))
@@ -138,9 +211,49 @@ def build_frame(directory_data, directory_labels):
 	datestring = datestring.replace(':', '-')
 	dataframe.to_csv('data_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
-	
-	
 
+def addOneToFrame(directory):
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	for datafile in datafiles:
+		csv_data = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	for index, row in csv_data.iterrows():
+		for y in range(1, 21):
+			for x in range(1, 21):
+				column = str(x) + '_' + str(y)
+				csv_data.loc[index, column] = row[column] + 1
+	
+	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
+	datestring = datestring.replace(':', '-')
+	csv_data.to_csv('data_frame_plus_one--' + datestring + '.csv', sep=';', index = False, index_label = False)
+	
+def addMultiFourToFrame(directory):
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	for datafile in datafiles:
+		csv_data = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	for index, row in csv_data.iterrows():
+		if row['repaired'] == 1:
+			for y in range(1, 21):
+				for x in range(1, 21):
+					column = str(x) + '_' + str(y)
+					csv_data.loc[index, column] = row[column] * 8
+	
+	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
+	datestring = datestring.replace(':', '-')
+	csv_data.to_csv('data_frame_times_eight--' + datestring + '.csv', sep=';', index = False, index_label = False)
+	
+	
 def check_chassis(directory):
 
 	
@@ -201,16 +314,21 @@ def analyse_frame(directory):
 	print('Repaired: ' + str(nr_of_repaired))
 	
 
-#analyse_frame('Data/Compressed/')	
+#build_frameUpsample('Data2/V1/Org/')	
+	
+#build_frameV1('Data2/V1/Org/')
+	
+#analyse_frame('Data2/V1/Upsample3x/')	
 
-#build_frame('Data/Flatten/', 'Data/Labels/')	
+#build_frame('Data2/Flatten/', 'Data/Labels/')	
 
-build_frameV3('Data/ReducedV3_org/')
+#build_frameV3('Data2/V3/Org/')
 	
 #check_chassis('Data/...') #
 
+#addOneToFrame('Data2/V1/Half_repaired/')
 
-
+addMultiFourToFrame('Data2/V1/Half_repaired/')
 
 
 

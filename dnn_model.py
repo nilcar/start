@@ -143,7 +143,7 @@ def main(argv):
 		# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
 		# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
 		# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
-		optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.001)
+		optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 		#optimizer = 'Adagrad'
 		
 		classifier = tensorflow.estimator.DNNClassifier \
@@ -222,7 +222,7 @@ def main(argv):
 			# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
 			# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
 			# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
-			optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.001)
+			optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 			#optimizer = 'Adagrad'
 			
 			classifier = tensorflow.estimator.DNNClassifier \
@@ -255,7 +255,7 @@ def main(argv):
 	### Evaluate the model
 	print('\nModel evaluation\n\n\n')
 	resultfile.write('\n\rModel evaluation\n\r\n')
-	expected = list(int_labels_validate) #list(label_mapping.keys())
+	expected = list(int_labels_validate) # The integer representation of the labels. Converts with: inverted_label_mapping() to label
 	predictions = classifier.predict(input_fn=lambda:dataloader.eval_input_fn(validationset, labels=None, batch_size=batch_size))
 	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
 	
@@ -272,20 +272,20 @@ def main(argv):
 		probability = pred_dict['probabilities'][class_id]
 		#print(template.format(expected[class_id], 100 * probability, expec))
 		resultfile.write('\n\r')
-		resultfile.write(template.format(inverted_label_mapping[expected[class_id]], 100 * probability, inverted_label_mapping[expec]))
+		resultfile.write(template.format(inverted_label_mapping[class_id], 100 * probability, inverted_label_mapping[expec]))
 		number_of_validations += 1
 		y_true.append(inverted_label_mapping[expec])
-		y_predicted.append(inverted_label_mapping[expected[class_id]])
+		y_predicted.append(inverted_label_mapping[class_id])
 		y_probability.append(probability)
 		
-		if str(inverted_label_mapping[expected[class_id]]) == str(inverted_label_mapping[expec]):
+		if str(inverted_label_mapping[class_id]) == str(inverted_label_mapping[expec]):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
 			number_of_matches += 1
 		#else:
 		#	print('No match')
 
 	#print(list(label_mapping.keys()))	
-	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys())) # labels=[0,1]
+	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
 	print(confusion_matrix_result)
 	dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
 	dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), list(label_mapping.keys()), file_suffix)

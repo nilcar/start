@@ -348,7 +348,7 @@ def train_input_fn(features, labels, batch_size, nr_epochs):
 	dataset = tensorflow.data.Dataset.from_tensor_slices((dict(features), labels))
 
 	# repeat, and batch the examples.
-	dataset = dataset.shuffle(1000).repeat(nr_epochs).batch(batch_size)
+	dataset = dataset.repeat(nr_epochs).batch(batch_size)
 	#ds = ds.batch(batch_size).repeat(num_epochs) # num_epochs ?
 	
 	version_full = tensorflow.__version__
