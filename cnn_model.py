@@ -17,6 +17,9 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
 import dataloader
+import cnn_config
+
+
 
 
 
@@ -25,13 +28,15 @@ import dataloader
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
 parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
-parser.add_argument('--hidden_units', default='10x10', type=str, help='layout for hidden layers')
+
 parser.add_argument('--nr_epochs', default=0, type=int, help='number of epochs')
 parser.add_argument('--choosen_label', default='T_CHASSIS', type=str, help='the label to train and evaluate')
 parser.add_argument('--data_path', default='Compressed/', type=str, help='path to data source files or compressed file')
-parser.add_argument('--max_nr_nan', default=0, type=int, help='number of nan per row for exclusion')
+
 parser.add_argument('--fixed_selection', default='True', type=str, help='If true selection is done by truck_date')
 parser.add_argument('--suffix', default='', type=str, help='To separate result filenames')
+
+
 
 
 def main(argv):
@@ -42,14 +47,8 @@ def main(argv):
 	nr_epochs =  args.nr_epochs # None
 	if nr_epochs == 0:
 		nr_epochs = None
-	hidden_units_arg = list(args.hidden_units.split('x'))
-	hidden_units = []
-	
-	for layer in hidden_units_arg:
-		hidden_units.append(int(layer))
 	
 	choosen_label = args.choosen_label
-	max_nr_nan = args.max_nr_nan # 0
 	if args.fixed_selection.lower() == 'false':
 		fixed_selection = False
 	else:
@@ -57,19 +56,17 @@ def main(argv):
 	
 	data_path = args.data_path
 	
-	file_suffix = '-' + choosen_label + '-' + args.hidden_units + '-' + str(args.train_steps) + '-' + args.suffix
-	
+	file_suffix = '-' + choosen_label + str(args.train_steps) + '-' + args.suffix
 	dropout = None
 	kfolds = 0
+	max_nr_nan = 0
 	
 	resultfile = open("Results/model_results" + file_suffix + ".txt", "w")
 	resultfile.write('\n\rModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\r')
-	resultfile.write('Layer setting: ' + str(hidden_units) + '\n\r')
 	resultfile.write('Train steps: ' + str(train_steps) + '\n\r')
 	resultfile.write('Number epochs: ' + str(nr_epochs) + '\n\r')
 	resultfile.write('Batchsize: ' + str(batch_size) + '\n\r')
 	resultfile.write('Choosen label: ' + choosen_label + '\n\r')
-	resultfile.write('Max_nr_nan: ' + str(max_nr_nan) + '\n\r')
 	resultfile.write('Fixed_selection: ' + str(fixed_selection) + '\n\r')
 	resultfile.write('Data path: ' + str(data_path) + '\n\r')
 	resultfile.write('Dropout: ' + str(dropout) + '\n\r')
@@ -115,35 +112,41 @@ def main(argv):
 		validationset, labels_validate, label_mapping, int_labels_validate = \
 			dataloader.get_model_data(validationframe, label_mapping, choosen_label, first_column, last_column)
 		
-		### Model training
-		my_feature_columns = []
-		for key in trainset.keys():
-			my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
-
-		# The model must choose between x classes.
-		print('Number of unique labels, n_classes: ' + str(len(label_mapping)))
+		#Numpy representation
+		train_data = trainset.values.astype(numpy.float32)
+		train_labels = int_labels_train.values
 		
-		# optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ?
-		# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
-		# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
-		# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
-		optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
-		#optimizer = 'Adagrad'
+		test_data = testset.values.astype(numpy.float32)
+		test_labels = int_labels_test.values
 		
-		classifier = tensorflow.estimator.DNNClassifier \
-			(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), dropout=dropout, batch_norm=False, optimizer=optimizer, model_dir='/data/Tensorflow/' + file_suffix) # , batch_norm=True ,optimizer=optimizer
+		validate_data = validationset.values.astype(numpy.float32)
+		
+		print(train_data.shape)
+		print(test_data.shape)
+		print(validate_data.shape)
+		
+		print(train_labels.shape)
+		print(test_labels.shape)
+		
+		cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=True)
+		cnn_eval_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": test_data},y=test_labels,num_epochs=1,shuffle=False)
+		cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data},y=None,num_epochs=1,shuffle=False)
+		
+		# Create the Estimator
+		classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_dnn_fn, model_dir='/data/Tensorflow/' + file_suffix)
 		
 		### Train the Model.
 		print('\nModel training\n\r\n\r\n')
-		#resultfile.write('\nModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\n')
-		classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
 
+		classifier.train(input_fn=cnn_train_input_fn,steps=train_steps)
+		
 		### Test the model
 		print('\n\r\n\rModel testing\n\n\n')
 		resultfile.write('\n\r\n\rModel testing\n\r')
 		# Evaluate the model.
 		
-		eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
+		eval_result = classifier.evaluate(input_fn=cnn_eval_input_fn)
+		
 		print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 		resultfile.write('\n\rTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 		resultfile.write('\n\rEval result:\n\r' + str(eval_result))
@@ -187,33 +190,41 @@ def main(argv):
 			testset, labels_test, label_mapping, int_labels_test = \
 				dataloader.get_model_data(foldtestframe, label_mapping, choosen_label, first_column, last_column)
 			
-			### Model training
-			my_feature_columns = []
-			for key in trainset.keys():
-				my_feature_columns.append(tensorflow.feature_column.numeric_column(key=key))
-
-			# The model must choose between x classes.
-			print('Number of unique labels, n_classes: ' + str(len(label_mapping)))
+			#Numpy representation
+			train_data = trainset.values #.astype(numpy.float32)
+			train_labels = int_labels_train.values
 			
-			# optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.1) ?
-			# optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.1) ?
-			# optimizer = tensorflow.train.AdagradDAOptimizer(learning_rate=0.1, global_step= ?) global_step=train_steps?	
-			# optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.1) ?
-			optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
-			#optimizer = 'Adagrad'
+			test_data = testset.values
+			test_labels = int_labels_test.values
 			
-			classifier = tensorflow.estimator.DNNClassifier \
-				(feature_columns=my_feature_columns,hidden_units=hidden_units,n_classes=len(label_mapping), dropout=dropout, batch_norm=False, optimizer=optimizer, model_dir='/data/Tensorflow/' + file_suffix) # , batch_norm=True ,optimizer=optimizer
+			validate_data = validationset.values
+			
+			print(train_data.shape)
+			print(test_data.shape)
+			print(validate_data.shape)
+			
+			print(train_labels.shape)
+			print(test_labels.shape)
+			
+			cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=True)
+			cnn_eval_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": test_data},y=test_labels,num_epochs=1,shuffle=False)
+			cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data},y=None,num_epochs=1,shuffle=False)
+			
+			# Create the Estimator
+			classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_fn, model_dir='/data/Tensorflow/' + file_suffix)
 			
 			### Train the Model.
 			print('\nModel training\n\r\n\r\n')
-			classifier.train(input_fn=lambda:dataloader.train_input_fn(trainset, int_labels_train, batch_size, nr_epochs), steps=train_steps)
 
+			classifier.train(input_fn=cnn_train_input_fn, steps=train_steps)
+			
 			### Test the model
 			print('\n\r\n\rModel testing\n\n\n')
 			resultfile.write('\n\r\n\rModel testing\n\r')
+			# Evaluate the model.
 			
-			eval_result = classifier.evaluate(input_fn=lambda:dataloader.eval_input_fn(testset, int_labels_test, batch_size))
+			eval_result = classifier.evaluate(input_fn=cnn_eval_input_fn)
+			
 			print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 			resultfile.write('\n\rK-fold:' + str(testindex + 1))
 			resultfile.write('\n\rTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
@@ -230,7 +241,9 @@ def main(argv):
 	print('\nModel evaluation\n\n\n')
 	resultfile.write('\n\rModel evaluation\n\r\n')
 	expected = list(int_labels_validate) # The integer representation of the labels. Converts with: inverted_label_mapping() to label
-	predictions = classifier.predict(input_fn=lambda:dataloader.eval_input_fn(validationset, labels=None, batch_size=batch_size))
+	#predictions = classifier.predict(input_fn=lambda:dataloader.eval_input_fn(validationset, labels=None, batch_size=batch_size))
+	predictions = classifier.predict(input_fn=cnn_validate_input_fn)
+	
 	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
 	
 	predictfile = open("Results/predictions" + file_suffix + ".txt", "w")
@@ -242,7 +255,7 @@ def main(argv):
 	y_probability = []
 	
 	for pred_dict, expec in zip(predictions, expected):
-		class_id = pred_dict['class_ids'][0]
+		class_id = pred_dict['class_ids']
 		probability = pred_dict['probabilities'][class_id]
 		resultfile.write('\n\r')
 		resultfile.write(template.format(inverted_label_mapping[class_id], 100 * probability, inverted_label_mapping[expec]))
@@ -269,7 +282,7 @@ def main(argv):
 	
 if __name__ == '__main__':
     tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
-    tensorflow.app.run(main) # So far only a dummy arguments...
+    tensorflow.app.run(main)
 	
 	
 	

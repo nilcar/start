@@ -17,30 +17,112 @@ import itertools
 #from tensorflow.python.data import Dataset
 
 
+def loadValidationFrameV2(directory):
 
+	dataframe = pandas.DataFrame()
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	for datafile in datafiles:
+		print('Reading compressed: ' + datafile)
+		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	dataframe = dataframe.fillna(value = 0.0)	
+	print(dataframe.head())
+	
+	return dataframe
+
+
+def loadValidationFrameV3(directory):
+
+	dataframe = pandas.DataFrame()
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	for datafile in datafiles:
+		print('Reading compressed: ' + datafile)
+		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	labelmaskvalidate = (dataframe['PARTITIONNING'] == '3_Validation')
+	dataframe = dataframe.loc[labelmaskvalidate]
+
+	dataframe = dataframe.fillna(value = 0.0)	
+	print(dataframe.head())
+	
+	return dataframe
+	
+def loadTrainTestFrameV3(directory):
+
+	dataframe = pandas.DataFrame()
+	trainframe = pandas.DataFrame()
+	testframe = pandas.DataFrame()
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+
+	for datafile in datafiles:
+		print('Reading compressed: ' + datafile)
+		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	labelmasktrain = (dataframe['PARTITIONNING'] == '1_Training')
+	trainframe = dataframe.loc[labelmasktrain]
+	trainframe = trainframe.fillna(value = 0.0)
+	
+	labelmasktest = (dataframe['PARTITIONNING'] == '2_Testing')
+	testframe = dataframe.loc[labelmasktest]
+	testframe = testframe.fillna(value = 0.0)
+	
+	
+	return trainframe, testframe
+	
+
+def excludeChassis (dataframe, directory):
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)	
+	
+	for datafile in datafiles:
+		highrisk_chassis = pandas.read_csv(datafile, sep=";", index_col=False)
+	
+	highrisk = {}
+	for index, row in highrisk_chassis.iterrows():
+		highrisk[row['T_CHASSIS']] = row['T_CHASSIS']
+	
+	delete_rows = []
+	for index, row in dataframe.iterrows():
+		try:
+			chassi = highrisk[row['T_CHASSIS']]
+		except KeyError:
+			delete_rows.append(index)
+		
+	print('Before delete: ' + str(dataframe.size))
+	dataframe = dataframe.drop(delete_rows)
+	print('Deleted rows:' + str(len(delete_rows)))
+	print('After delete: ' + str(dataframe.size))
+	
+	#sys.exit()
+	
+	return dataframe
+	
 """
 Returns three pandas dataframes randomously shuffled data with standard index
-If compressed is True; data will be read from a csv file with already structured data.
-If compressed is False; data will be read from csv source files and then structured
-labelmapping should been done before outside this function and come as an filled dictionary
+Rows can be excluded by allowing a max number of NaN
+Fixed selection handles reading of dataframe differently
 """
 
-def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan = 0, fixed_selection = True):
+def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix = ''):
 
-	truck_type = 'truck'
-	truck_id = 'T_CHASSIS'
-	truck_date = 'truck_date'
-	index_tuple = (truck_type, truck_id, truck_date)
 	
+	dataframe = pandas.DataFrame()
 	resultfile = open("Results/model_statistics.txt", "w")
 	
-	doubles_dict = {}
-	found_doubles = {}
-	dataframe = pandas.DataFrame()
-	
-	CSV_COLUMN_NAMES = ['A', 'B','truck', 'T_CHASSIS', 'E', 'truck_date', 'G', 'H', 'I', 'J', 'x_index', 'L', 'M', 'N', 'y_index', 'value', 'Q', 'R', 'S']
-	
-	#print(len(CSV_COLUMN_NAMES))
 	
 	datafiles = []
 	for item in listdir(directory): 
@@ -51,21 +133,11 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	
 	#print('Reading and merging cvs files, merging only if "compressed" is false')
 	csv_data = pandas.DataFrame()
-	nr = 1
-	if not(compressed_data):		
-		for datafile in datafiles:
-			#print(datafile)
-			csv_data_file = pandas.read_csv(datafile, sep=";", names=CSV_COLUMN_NAMES, index_col=False)
-			#print(csv_data_file.head())
-			csv_data = csv_data.append(csv_data_file, ignore_index=True)
-			del csv_data_file
-			print('appended cvsfile nr: ' + str(nr))
-			nr += 1
-	else:
-		# Read already structured data
-		for datafile in datafiles:
-			print('Reading compressed: ' + datafile)
-			csv_data = pandas.read_csv(datafile, sep=";", index_col=False)
+	
+	# Read already structured data
+	for datafile in datafiles:
+		print('Reading compressed: ' + datafile)
+		csv_data = pandas.read_csv(datafile, sep=";", index_col=False)
 
 		
 	print('Csv data from file')
@@ -77,86 +149,15 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	print('Csv data after shuffeling')
 	print(csv_data.head())
 	
-	
-	if not(compressed_data):
-		# Build the target dataframe structure
-		
-		dataframe[truck_type] = []
-		dataframe[truck_id] = []
-		dataframe[truck_date] = []
-		print('Building struture and fill it with data\n')
-		for y in range(1, 21):
-			for x in range(1, 21):
-				dataframe[str(x) + '_' + str(y)] = []
-			
-		dataframe = dataframe.set_index(list(index_tuple))
-	
-		# fill the dataframe with data
-		print('Inserting data...\n')
-		accepted_labels = 0
-		invalid_labels = 0
-		doubles_dict = {}
-		found_doubles = {}
-		
-		for index, row in csv_data.iterrows():
-			# Only insert data where truck_id is found in label_mapping
-			index2 = row[truck_id]
-			try:
-				intlabel = label_mapping[index2] # Only to see if the label is possible to map
-				index1 = row[truck_type]
-				index3 = row[truck_date]
-				column = str(row['x_index']) + '_' + str(row['y_index'])
-				value = row['value']
-				
-				key = index1 + ':' +  index2 + ':' +  index3 + '#' +  column
-				try:
-					valueseries = doubles_dict[key]
-					valueseries = valueseries.append(pandas.Series([value]))
-					doubles_dict[key] = valueseries
-					value = valueseries.max(skipna=False)
-				except KeyError:
-					doubles_dict[key] = pandas.Series([value])
-				
-				try: 
-					# insert value if indexed row exist
-					dataframe.loc[(index1, index2, index3), :].at[column] = value
-				except KeyError:
-					dataframe.loc[(index1, index2, index3), :] = numpy.nan # Inserts a row with default NaN in each x,y column
-					dataframe.loc[(index1, index2, index3), :].at[column] = value
-				accepted_labels += 1
-			except KeyError:
-				# Source label did not exist 
-				invalid_labels += 1
-		
-		dataframe = dataframe.reset_index()
-		#dataframe = csv_data.set_index(list(index_tuple))
-		#print('Missing label not inserted: ' + index2)
-	else:
-		#dataframe = csv_data.set_index(list(index_tuple))
-		dataframe = csv_data
-		#print(dataframe.head())
-		
-	del doubles_dict
-		
-	if not(compressed_data):	
-		print('Total number of labels: ' + str(accepted_labels + invalid_labels))
-		print('Number of accepted labels: ' + str(accepted_labels))
-		print('Number of invalid labels: ' + str(invalid_labels))
-	
-	
+	#dataframe = csv_data.set_index(list(index_tuple))
+	dataframe = csv_data
+	#print(dataframe.head())
 	
 	print('Structured data')
 	print(dataframe.head())
 	
 	print('Size of dataframe data with Nan:' + str(dataframe.size))
-	if not(compressed_data):
-		print('Saving frame data to csv file...\n')
-		datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
-		datestring = datestring.replace(':', '-')
-		#print(dataframe.head())
-		dataframe.to_csv('Compressed/data_frame--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
-		
 	#dataframe = nan_statistics(dataframe)
 	
 	dataframe = exclude_rows_with_nan(dataframe, max_nr_of_nan)
@@ -165,6 +166,8 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 	dataframe = dataframe.fillna(value = 0.0)
 	print('After filling')
 	print(dataframe.head())
+	
+	dataframe, first_column, last_column = excludeZerocolumns(dataframe, 1.0, file_suffix)
 	
 	if fixed_selection:
 	
@@ -176,112 +179,42 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 		labelmaskvalidate = (dataframe['PARTITIONNING'] == '3_Validation')
 		validationset = dataframe.loc[labelmaskvalidate]
 	
-	
-		"""
-		dataframe = dataframe.set_index('truck_date')
-		dataframe.index = pandas.to_datetime(dataframe.index)
-		
-		trainset = dataframe.loc['2016-1-1':'2016-5-31']
-		testset = dataframe.loc['2016-6-1':'2016-6-10']
-		validationset = dataframe.loc['2016-6-11':'2018-12-31']
-		
-		trainset = trainset.reset_index()
-		testset = testset.reset_index()
-		validationset = validationset.reset_index()
-		"""
-		
-		""" DB
-		sql_train = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-01-01' and '2016-05-31'"
-		sql_test = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-06-01' and '2016-06-10'"
-		sql_validate = "SELECT * FROM data_valid_all_labels WHERE truck_date BETWEEN '2016-06-11' and '2018-12-31'"
-		
-		mydb = mysql.connector.connect(
-		host="localhost",
-		user="root",
-		passwd="roghog",
-		database="roger")
-		
-		trainset = pandas.read_sql(sql_train, mydb)
-		testset = pandas.read_sql(sql_test, mydb)
-		validationset = pandas.read_sql(sql_validate, mydb)
-		
-		print('Read all from database........ \n\n')
-		
-		#print(trainset.head(20))
-		
-		# Empty cells gets 0.0 from db selection
-		trainset = trainset.replace('None', numpy.nan)
-		testset = testset.replace('None', numpy.nan)
-		validationset = validationset.replace('None', numpy.nan)
-		
-		trainset = nan_statistics(trainset)
-		testset = nan_statistics(testset)
-		validationset = nan_statistics(validationset)
-	
-		trainset = exclude_rows_with_nan(trainset, max_nr_of_nan)
-		testset= exclude_rows_with_nan(testset, max_nr_of_nan)
-		validationset = exclude_rows_with_nan(validationset, max_nr_of_nan)
-		
-		
-		trainset = trainset.fillna(value = 0.0)
-		testset = testset.fillna(value = 0.0)
-		validationset = validationset.fillna(value = 0.0)
-		
-		"""
-		
-		"""
-		print('Trainset:')
-		print(trainset.head())
-		print('Testset:')
-		print(testset.head())
-		print('Validationset:')
-		print(validationset.head())
-		"""
-	
 	else:
-
-		
-		"""
-		trainset = pandas.DataFrame()
-		testset = pandas.DataFrame()
-		validationset = pandas.DataFrame()		
 	
-		labelmask_healthy = (dataframe['repaired'] == 0)
-		labelmask_not_healthy = (dataframe['repaired'] == 1)
-		healthy_frame = dataframe.loc[labelmask_healthy]
-		healthy_frame = healthy_frame.reindex(numpy.random.permutation(healthy_frame.index))
-		not_healthy_frame = dataframe.loc[labelmask_not_healthy]
-		not_healthy_frame = not_healthy_frame.reindex(numpy.random.permutation(not_healthy_frame.index))
-		
-		train_healthy, rest = train_test_split(healthy_frame, test_size=0.4)
-		test_healthy, validate_healthy = train_test_split(rest, test_size=0.5)
-		
-		train_not_healthy, rest_ = train_test_split(not_healthy_frame, test_size=0.4)
-		test_not_healthy, validate_not_healthy = train_test_split(rest_, test_size=0.5)
-		
-		trainset = trainset.append(train_healthy, ignore_index=True)
-		trainset = trainset.append(train_not_healthy, ignore_index=True)
-		
-		testset = testset.append(test_healthy, ignore_index=True)
-		testset = testset.append(test_not_healthy, ignore_index=True)
-		
-		validationset = validationset.append(validate_healthy, ignore_index=True)
-		validationset = validationset.append(validate_not_healthy, ignore_index=True)
-		
-		#validationset.to_csv('data_frame_validation_V2_2.csv', sep=';', index = False, index_label = False)
-		"""
-		
 		#V1
+		
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
+		#validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
 		
-		#V2
+		#V2 validation
+		"""
+		validationset = loadValidationFrameV2('Data2/ReducedV2/')
+		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
+		"""
+		
+		
+		
+		
+		#V2 only
 		#trainset, testset, validationset = unique_selection(dataframe)
 		
-		#trainset, testset = train_test_split(dataframe, test_size=0.1)
-		#testset, validationset = train_test_split(testset, test_size=0.5)
+		# V1 train/test V3 validate
+		"""
+		trainset, testset = train_test_split(dataframe, test_size=0.4)
+		testset, validationset = train_test_split(testset, test_size=0.5)
+		validationset = loadValidationFrameV3('Data2/V3/')
+		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
+		"""
+		
+		# V3 train/test V1 validate
+		"""
+		trainset, testset = train_test_split(dataframe, test_size=0.4)
+		testset, validationset = train_test_split(testset, test_size=0.5)
+		trainset, testset = loadTrainTestFrameV3('Data2/V3/')
+		"""
+		
 	del dataframe
-	
 	
 	print('Trainset')
 	print(trainset.head())
@@ -295,14 +228,63 @@ def loadData(directory, compressed_data=False, label_mapping = {}, max_nr_of_nan
 
 	resultfile.close()
 	
-	return trainset, testset, validationset
+	return trainset, testset, validationset, first_column, last_column
 	
-def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
+def excludeZerocolumns(dataframe, percentage, file_suffix):
+
+	print('Size before Zero deletions: ' + str(dataframe.size))
+	resultfile = open("Results/model_results" + file_suffix + ".txt", "a")
+
+	values = pandas.Series()
+	number_zeros = 0
+	number_values = 0
+	delete_columns = []
+	first = True
+	first_column = ''
+	last_column = ''
+	
+	for x in range(1, 21):
+		for y in range(1, 21):
+			column = str(x) + '_' + str(y)
+			values = pandas.Series(dataframe.loc[:,column])
+			number_zeros = 0
+			number_values = 0
+			for value in values:
+				number_values += 1
+				if value == 0.0:
+					number_zeros += 1
+			if 	(number_zeros / number_values) > percentage:
+				delete_columns.append(column)
+			else:
+				if first:
+					first = False
+					first_column = column
+				last_column = column
+					
+	print('First column: ' + first_column)
+	print('Last column: ' + last_column)
+					
+	for column in delete_columns:
+		dataframe.pop(column)
+	
+	resultfile.write('Number of column deletions: ' + str(len(delete_columns)) + '\n\r')
+	print('Number of column deletions: ' + str(len(delete_columns)))
+	print('Size after Zero deletions: ' + str(dataframe.size))
+	
+	return dataframe, first_column, last_column
+	
+	
+	
+def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS', first_column = '1_1', last_column = '20_20'):
 
 	# Clean up the dataframe to be converted into tensorflow datasets (features and labels)
 	string_labels = dataframe.pop(choosen_label)
-	dataframe = dataframe.loc[:, '1_1':'20_20']
-		
+	
+	print('CAME here')
+	
+	dataframe = dataframe.loc[:, first_column:last_column] # loc[:, '1_1':'20_20']
+
+	
 	#print('string labels size:' + str(string_labels.size))
 	#print('Dataframe for tensor slices')
 	#print(dataframe.head(10))
