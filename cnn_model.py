@@ -58,7 +58,7 @@ def main(argv):
 	
 	file_suffix = '-' + choosen_label + str(args.train_steps) + '-' + args.suffix
 	dropout = None
-	kfolds = 0
+	kfolds = 5
 	max_nr_nan = 0
 	
 	resultfile = open("Results/model_results" + file_suffix + ".txt", "w")
@@ -128,12 +128,12 @@ def main(argv):
 		print(train_labels.shape)
 		print(test_labels.shape)
 		
-		cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=True)
+		cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=False)
 		cnn_eval_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": test_data},y=test_labels,num_epochs=1,shuffle=False)
 		cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data},y=None,num_epochs=1,shuffle=False)
 		
 		# Create the Estimator
-		classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_dnn_fn, model_dir='/data/Tensorflow/' + file_suffix)
+		classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_paper_fn, model_dir='/data/Tensorflow/' + file_suffix)
 		
 		### Train the Model.
 		print('\nModel training\n\r\n\r\n')
@@ -191,6 +191,7 @@ def main(argv):
 				dataloader.get_model_data(foldtestframe, label_mapping, choosen_label, first_column, last_column)
 			
 			#Numpy representation
+			"""
 			train_data = trainset.values #.astype(numpy.float32)
 			train_labels = int_labels_train.values
 			
@@ -198,6 +199,15 @@ def main(argv):
 			test_labels = int_labels_test.values
 			
 			validate_data = validationset.values
+			"""
+			
+			train_data = trainset.values.astype(numpy.float32)
+			train_labels = int_labels_train.values
+		
+			test_data = testset.values.astype(numpy.float32)
+			test_labels = int_labels_test.values
+		
+			validate_data = validationset.values.astype(numpy.float32)
 			
 			print(train_data.shape)
 			print(test_data.shape)
@@ -206,12 +216,12 @@ def main(argv):
 			print(train_labels.shape)
 			print(test_labels.shape)
 			
-			cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=True)
+			cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=False)
 			cnn_eval_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": test_data},y=test_labels,num_epochs=1,shuffle=False)
 			cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data},y=None,num_epochs=1,shuffle=False)
 			
 			# Create the Estimator
-			classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_fn, model_dir='/data/Tensorflow/' + file_suffix)
+			classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_paper_fn, model_dir='/data/Tensorflow/' + file_suffix)
 			
 			### Train the Model.
 			print('\nModel training\n\r\n\r\n')
@@ -270,8 +280,8 @@ def main(argv):
 
 	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
 	print(confusion_matrix_result)
-	#dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
-	#dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), list(label_mapping.keys()), file_suffix)
+	dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
+	dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), list(label_mapping.keys()), file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))

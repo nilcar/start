@@ -185,7 +185,7 @@ def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix =
 		
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
-		#validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
+		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
 		
 		#V2 validation
 		"""

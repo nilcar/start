@@ -5,10 +5,12 @@ import tensorflow
 
 
 def cnn_model_org_fn(features, labels, mode):
+	
+	print('##### CNN-Org')
+	
 	"""Model function for CNN."""
 	# Input Layer
 	# Reshape X to 4-D tensor: [batch_size, width, height, channels]
-
 	input_layer = tensorflow.reshape(features["x"], [-1, 20, 20, 1])
 
 	# Convolutional Layer #1
@@ -69,8 +71,10 @@ def cnn_model_org_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		#optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.001)
-		optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
+		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
+		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
+		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
 		train_op = optimizer.minimize(loss=loss, global_step=tensorflow.train.get_global_step())
 		return tensorflow.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
@@ -86,6 +90,9 @@ def cnn_model_org_fn(features, labels, mode):
 	
 	
 def cnn_model_paper_fn(features, labels, mode):
+
+	print('##### CNN-Paper')
+
 	# Input Layer
 	# Reshape X to 4-D tensor: [batch_size, width, height, channels]
 	input_layer = tensorflow.reshape(features["x"], [-1, 20, 20, 1])
@@ -147,8 +154,10 @@ def cnn_model_paper_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		#optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.001)
-		optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
+		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
+		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
+		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
 		train_op = optimizer.minimize(loss=loss, global_step=tensorflow.train.get_global_step())
 		return tensorflow.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
@@ -164,6 +173,9 @@ def cnn_model_paper_fn(features, labels, mode):
 	
 	
 def cnn_model_dnn_fn(features, labels, mode):
+	
+	print('##### CNN-DNN')
+	
 	"""Model function for CNN."""
 	# Input Layer
 	# Reshape X to 4-D tensor: [batch_size, width, height, channels]
@@ -230,8 +242,10 @@ def cnn_model_dnn_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		#optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.001)
-		optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
+		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
+		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
+		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
 		train_op = optimizer.minimize(loss=loss, global_step=tensorflow.train.get_global_step())
 		return tensorflow.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
