@@ -71,7 +71,7 @@ def cnn_model_org_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.0001)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
@@ -154,7 +154,7 @@ def cnn_model_paper_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.0001)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
@@ -242,7 +242,7 @@ def cnn_model_dnn_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.0001)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
@@ -329,7 +329,7 @@ def cnn_model_dnn5_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.0001)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
@@ -345,7 +345,7 @@ def cnn_model_dnn5_fn(features, labels, mode):
 	
 def cnn_model_dnn5wide_fn(features, labels, mode):
 	
-	print('##### CNN-DNN5')
+	print('##### CNN-DNN5-WIDE')
 	
 	"""Model function for CNN."""
 	# Input Layer
@@ -415,7 +415,7 @@ def cnn_model_dnn5wide_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.0001)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
@@ -431,7 +431,7 @@ def cnn_model_dnn5wide_fn(features, labels, mode):
 	
 def cnn_model_dnn5arrow_fn(features, labels, mode):
 	
-	print('##### CNN-DNN5')
+	print('##### CNN-DNN5-ARROW')
 	
 	"""Model function for CNN."""
 	# Input Layer
@@ -501,7 +501,7 @@ def cnn_model_dnn5arrow_fn(features, labels, mode):
 
 	# Configure the Training Op (for TRAIN mode)
 	if mode == tensorflow.estimator.ModeKeys.TRAIN:
-		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.0001)
+		optimizer = tensorflow.train.GradientDescentOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.ProximalAdagradOptimizer(learning_rate=0.01, l1_regularization_strength=0.01)
 		#optimizer = tensorflow.train.AdagradOptimizer(learning_rate=0.01)
 		#optimizer = tensorflow.train.AdamOptimizer(learning_rate=0.01)
