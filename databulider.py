@@ -94,7 +94,7 @@ def build_frameV3(directory_data):
 	
 	CSV_COLUMN_NAMES_DATA.append('Send_Date')
 	CSV_COLUMN_NAMES_DATA.append('All_Fault')
-	CSV_COLUMN_NAMES_DATA.append('All_Fault_in_3_months')
+	CSV_COLUMN_NAMES_DATA.append('repaired')
 	CSV_COLUMN_NAMES_DATA.append('PARTITIONNING')
 	
 	print(len(CSV_COLUMN_NAMES_DATA))
@@ -247,11 +247,11 @@ def addMultiFourToFrame(directory):
 			for y in range(1, 21):
 				for x in range(1, 21):
 					column = str(x) + '_' + str(y)
-					csv_data.loc[index, column] = row[column] * 8
+					csv_data.loc[index, column] = row[column] * 1.5
 	
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	csv_data.to_csv('data_frame_times_eight--' + datestring + '.csv', sep=';', index = False, index_label = False)
+	csv_data.to_csv('data_frame_times_1_5--' + datestring + '.csv', sep=';', index = False, index_label = False)
 	
 	
 def check_chassis(directory):
@@ -322,13 +322,13 @@ def analyse_frame(directory):
 
 #build_frame('Data2/Flatten/', 'Data/Labels/')	
 
-#build_frameV3('Data2/V3/Org/')
+build_frameV3('Data2/V3/')
 	
 #check_chassis('Data/...') #
 
 #addOneToFrame('Data2/V1/Half_repaired/')
 
-addMultiFourToFrame('Data2/V1/Half_repaired/')
+#addMultiFourToFrame('Data2/V1/Half_repaired/')
 
 
 
