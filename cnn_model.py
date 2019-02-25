@@ -128,12 +128,12 @@ def main(argv):
 		print(train_labels.shape)
 		print(test_labels.shape)
 		
-		cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=False)
+		cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=True)
 		cnn_eval_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": test_data},y=test_labels,num_epochs=1,shuffle=False)
 		cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data},y=None,num_epochs=1,shuffle=False)
 		
 		# Create the Estimator
-		classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_paper_fn, model_dir='/data/Tensorflow/' + file_suffix)
+		classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_dnn5_fn, model_dir='/data/Tensorflow/' + file_suffix)
 		
 		### Train the Model.
 		print('\nModel training\n\r\n\r\n')
@@ -191,16 +191,6 @@ def main(argv):
 				dataloader.get_model_data(foldtestframe, label_mapping, choosen_label, first_column, last_column)
 			
 			#Numpy representation
-			"""
-			train_data = trainset.values #.astype(numpy.float32)
-			train_labels = int_labels_train.values
-			
-			test_data = testset.values
-			test_labels = int_labels_test.values
-			
-			validate_data = validationset.values
-			"""
-			
 			train_data = trainset.values.astype(numpy.float32)
 			train_labels = int_labels_train.values
 		
@@ -216,12 +206,12 @@ def main(argv):
 			print(train_labels.shape)
 			print(test_labels.shape)
 			
-			cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=False)
+			cnn_train_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": train_data},y=train_labels,batch_size=batch_size,num_epochs=nr_epochs,shuffle=True)
 			cnn_eval_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": test_data},y=test_labels,num_epochs=1,shuffle=False)
 			cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data},y=None,num_epochs=1,shuffle=False)
 			
 			# Create the Estimator
-			classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_paper_fn, model_dir='/data/Tensorflow/' + file_suffix)
+			classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_dnn5_fn, model_dir='/data/Tensorflow/' + file_suffix)
 			
 			### Train the Model.
 			print('\nModel training\n\r\n\r\n')
@@ -257,12 +247,15 @@ def main(argv):
 	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
 	
 	predictfile = open("Results/predictions" + file_suffix + ".txt", "w")
+	#predictvaluefile = open("Results/predictionvalues" + file_suffix + ".txt", "w")
+	
 	
 	number_of_matches = 0
 	number_of_validations = 0
 	y_true = []
 	y_predicted = []
 	y_probability = []
+	total_probability = 0
 	
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids']
@@ -272,23 +265,28 @@ def main(argv):
 		number_of_validations += 1
 		y_true.append(inverted_label_mapping[expec])
 		y_predicted.append(inverted_label_mapping[class_id])
-		y_probability.append(probability)
+		y_probability.append(pred_dict['probabilities'][1]) # For positive label in ROC-curve
+		
+		#predictvaluefile.write(str(pred_dict) + '\n\r')
 		
 		if str(inverted_label_mapping[class_id]) == str(inverted_label_mapping[expec]):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
 			number_of_matches += 1
-
+			total_probability += 100 * probability
+					
 	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
 	print(confusion_matrix_result)
 	dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
-	dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), list(label_mapping.keys()), file_suffix)
+	dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))
 	predictfile.write('\n\rMatches: ' + str(number_of_matches))
+	predictfile.write('\n\rAverage matches probability: ' + str(total_probability / number_of_matches))
 	resultfile.write('\n\r******************************\n\r')
 	resultfile.close()
 	predictfile.close()
+	#predictvaluefile.close()
 	
 if __name__ == '__main__':
     tensorflow.logging.set_verbosity(tensorflow.logging.INFO)

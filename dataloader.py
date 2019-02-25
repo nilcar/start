@@ -96,7 +96,9 @@ def excludeChassis (dataframe, directory):
 		highrisk[row['T_CHASSIS']] = row['T_CHASSIS']
 	
 	delete_rows = []
+	number_of_rows = 0
 	for index, row in dataframe.iterrows():
+		number_of_rows += 1
 		try:
 			chassi = highrisk[row['T_CHASSIS']]
 		except KeyError:
@@ -104,6 +106,7 @@ def excludeChassis (dataframe, directory):
 		
 	print('Before delete: ' + str(dataframe.size))
 	dataframe = dataframe.drop(delete_rows)
+	print('Number of validation rows:' + str(number_of_rows))
 	print('Deleted rows:' + str(len(delete_rows)))
 	print('After delete: ' + str(dataframe.size))
 	
@@ -183,9 +186,11 @@ def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix =
 	
 		#V1
 		
-		trainset, testset = train_test_split(dataframe, test_size=0.4)
-		testset, validationset = train_test_split(testset, test_size=0.5)
-		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
+		#trainset, testset = train_test_split(dataframe, test_size=0.4)
+		#testset, validationset = train_test_split(testset, test_size=0.5)
+		
+		#validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
+		
 		
 		#V2 validation
 		"""
@@ -200,12 +205,12 @@ def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix =
 		#trainset, testset, validationset = unique_selection(dataframe)
 		
 		# V1 train/test V3 validate
-		"""
+		
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
 		validationset = loadValidationFrameV3('Data2/V3/')
 		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
-		"""
+		
 		
 		# V3 train/test V1 validate
 		"""
@@ -668,7 +673,7 @@ def unique_selection(dataframe):
 	
 	return trainframe, testframe, validateframe
 	
-def print_roc_curve(y_true, y_prob, labels, filesuffix):
+def print_roc_curve(y_true, y_prob, filesuffix):
 
 	fpr, tpr, _ = roc_curve(y_true, y_prob, pos_label=1)
 	roc_auc = auc(fpr, tpr)
