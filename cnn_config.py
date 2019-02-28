@@ -314,21 +314,21 @@ def cnn_model_dnn5_fn(features, labels, mode):
 	dense = tensorflow.layers.dense(inputs=pool2_flat, units=800, activation=tensorflow.nn.relu)
 	
 	# Add dropout operation; 0.8 probability that element will be kept
-	dropout = tensorflow.layers.dropout(inputs=dense, rate=0.2, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
+	#dropout = tensorflow.layers.dropout(inputs=dense, rate=0.7, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
 	
-	dense1 = tensorflow.layers.dense(inputs=dropout, units=800, activation=tensorflow.nn.relu)
+	dense1 = tensorflow.layers.dense(inputs=dense, units=800, activation=tensorflow.nn.relu)
 	
-	dropout2 = tensorflow.layers.dropout(inputs=dense1, rate=0.2, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
+	#dropout2 = tensorflow.layers.dropout(inputs=dense1, rate=0.7, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
 	
-	dense2 = tensorflow.layers.dense(inputs=dropout2, units=400, activation=tensorflow.nn.relu)
+	dense2 = tensorflow.layers.dense(inputs=dense1, units=400, activation=tensorflow.nn.relu)
 	
-	dropout3 = tensorflow.layers.dropout(inputs=dense2, rate=0.2, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
+	#dropout3 = tensorflow.layers.dropout(inputs=dense2, rate=0.7, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
 	
-	dense3 = tensorflow.layers.dense(inputs=dropout3, units=400, activation=tensorflow.nn.relu)
+	dense3 = tensorflow.layers.dense(inputs=dense2, units=400, activation=tensorflow.nn.relu)
 	
-	dropout4 = tensorflow.layers.dropout(inputs=dense3, rate=0.2, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
+	#dropout4 = tensorflow.layers.dropout(inputs=dense3, rate=0.7, training=mode == tensorflow.estimator.ModeKeys.TRAIN)
 	
-	dense4 = tensorflow.layers.dense(inputs=dropout4, units=20, activation=tensorflow.nn.relu)
+	dense4 = tensorflow.layers.dense(inputs=dense3, units=20, activation=tensorflow.nn.relu)
 	# Output Tensor Shape: [batch_size, 20]
 	
 	# Add dropout operation; 0.8 probability that element will be kept
@@ -364,7 +364,8 @@ def cnn_model_dnn5_fn(features, labels, mode):
 	# Add evaluation metrics (for EVAL mode)
 	eval_metric_ops = {"accuracy": tensorflow.metrics.accuracy(labels=labels, predictions=predictions["class_ids"]),
 		"precision": tensorflow.metrics.precision( labels=labels, predictions=predictions["class_ids"] ),
-		"recall":    tensorflow.metrics.recall(    labels=labels, predictions=predictions["class_ids"] )}
+		"recall":    tensorflow.metrics.recall(    labels=labels, predictions=predictions["class_ids"] ),
+		"auc":    tensorflow.metrics.auc(    labels=labels, predictions=predictions["class_ids"] )}
 	return tensorflow.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 	
 	

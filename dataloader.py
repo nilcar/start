@@ -186,8 +186,8 @@ def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix =
 	
 		#V1
 		
-		#trainset, testset = train_test_split(dataframe, test_size=0.4)
-		#testset, validationset = train_test_split(testset, test_size=0.5)
+		trainset, testset = train_test_split(dataframe, test_size=0.4)
+		testset, validationset = train_test_split(testset, test_size=0.5)
 		
 		#validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
 		
@@ -205,12 +205,12 @@ def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix =
 		#trainset, testset, validationset = unique_selection(dataframe)
 		
 		# V1 train/test V3 validate
-		
+		"""
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
 		validationset = loadValidationFrameV3('Data2/V3/')
 		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
-		
+		"""
 		
 		# V3 train/test V1 validate
 		"""
