@@ -29,8 +29,8 @@ def loadValidationFrame(directory):
 		print('Reading compressed: ' + datafile)
 		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
 
-	labelmaskvalidate = (dataframe['PARTITIONNING'] == '3_Validation')
-	dataframe = dataframe.loc[labelmaskvalidate]
+	#labelmaskvalidate = (dataframe['PARTITIONNING'] == '3_Validation')
+	#dataframe = dataframe.loc[labelmaskvalidate]
 
 	dataframe = dataframe.fillna(value = 0.0)	
 	print(dataframe.head())
@@ -138,7 +138,7 @@ def print_cm(confusion_matrix, labels, filesuffix):
 
 
 	
-def print_roc_curve(y_true, y_prob, labels, filesuffix):
+def print_roc_curve(y_true, y_prob, filesuffix):
 
 	fpr, tpr, _ = roc_curve(y_true, y_prob, pos_label=1)
 	roc_auc = auc(fpr, tpr)
