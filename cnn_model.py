@@ -256,6 +256,9 @@ def main(argv):
 	y_predicted = []
 	y_probability = []
 	total_probability = 0
+	y_predicted_new = []
+	limit = 0.96
+	unhealthy_probabilities = pandas.Series()
 	
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids']
@@ -269,6 +272,14 @@ def main(argv):
 		
 		#predictvaluefile.write(str(pred_dict) + '\n\r')
 		
+		if inverted_label_mapping[class_id] == 1:
+			unhealthy_probabilities = unhealthy_probabilities.append(pandas.Series([probability]))
+		
+		if inverted_label_mapping[class_id] == 1 and probability < limit:
+			y_predicted_new.append(0)
+		else:
+			y_predicted_new.append(class_id)
+		
 		if str(inverted_label_mapping[class_id]) == str(inverted_label_mapping[expec]):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
 			number_of_matches += 1
@@ -276,8 +287,14 @@ def main(argv):
 					
 	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
 	print(confusion_matrix_result)
+	confusion_matrix_new = confusion_matrix(y_true, y_predicted_new, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
+	print(confusion_matrix_new)
+	
 	dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
+	dataloader.print_cm(confusion_matrix_new, list(label_mapping.keys()), file_suffix + 'New')
 	dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), file_suffix)
+	
+	dataloader.print_probabilities(unhealthy_probabilities, file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))

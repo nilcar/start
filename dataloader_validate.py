@@ -29,6 +29,7 @@ def loadValidationFrame(directory):
 		print('Reading compressed: ' + datafile)
 		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
 
+	#labelmaskvalidate = (dataframe['Send_Date'] == '2018-08-15') # Max day = 24
 	#labelmaskvalidate = (dataframe['PARTITIONNING'] == '3_Validation')
 	#dataframe = dataframe.loc[labelmaskvalidate]
 
@@ -153,6 +154,17 @@ def print_roc_curve(y_true, y_prob, filesuffix):
 	plt.title('Receiver operating characteristic')
 	plt.legend(loc="lower right")
 	plt.savefig('Results/ROC_curve-' + filesuffix + '.png')
+	plt.clf()
 
+
+def print_probabilities(probabilities, file_suffix):
+
+	probabilities.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Probabilities Unhealthy")
+	plt.grid(True)
+	plt.savefig("Results/Probabilities-" + file_suffix + ".png")
+	plt.clf()
 
 

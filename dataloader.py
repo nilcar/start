@@ -188,18 +188,13 @@ def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix =
 		
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
-		
 		#validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
-		
 		
 		#V2 validation
 		"""
 		validationset = loadValidationFrameV2('Data2/ReducedV2/')
 		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
 		"""
-		
-		
-		
 		
 		#V2 only
 		#trainset, testset, validationset = unique_selection(dataframe)
@@ -209,8 +204,9 @@ def loadData(directory, max_nr_of_nan = 0, fixed_selection = True, file_suffix =
 		trainset, testset = train_test_split(dataframe, test_size=0.4)
 		testset, validationset = train_test_split(testset, test_size=0.5)
 		validationset = loadValidationFrameV3('Data2/V3/')
-		validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
 		"""
+		#validationset = excludeChassis (validationset, 'Data2/Highrisk_chassis/')
+		
 		
 		# V3 train/test V1 validate
 		"""
@@ -691,8 +687,17 @@ def print_roc_curve(y_true, y_prob, filesuffix):
 	plt.title('Receiver operating characteristic')
 	plt.legend(loc="lower right")
 	plt.savefig('Results/ROC_curve-' + filesuffix + '.png')
+	plt.clf()
 
-	
+def print_probabilities(probabilities, file_suffix):
+
+	probabilities.plot(kind='hist', bins=40)
+	#x1,x2,y1,y2 = plt.axis()
+	#plt.axis((x1,x2,y1,400))
+	plt.title("Probabilities Unhealthy")
+	plt.grid(True)
+	plt.savefig("Results/Probabilities-" + file_suffix + ".png")
+	plt.clf()	
 	
 #get_data_source_labels('Data_original/')		
 #get_valid_labels('Labels/')

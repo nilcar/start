@@ -17,7 +17,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
 import dataloader_validate
-import cnn_config
+import cnn_config_saved
 
 
 
@@ -61,8 +61,14 @@ def main(argv):
 	
 	cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data},y=None,num_epochs=1,shuffle=False)
 	
-	# Create the Estimator
-	classifier = tensorflow.estimator.Estimator(model_fn=cnn_config.cnn_model_dnn5_fn, model_dir='/data/Tensorflow/CNN/-repaired10000-CNN_Kfold5_Normal_800_CL2_ADAGR_01_LL20_NP_DR02_1234_DIL2_dnn5_1/')
+	# Create the Estimator 
+	
+	# -repaired10000-CNN_Kfold5_Normal_800_CL2_ADAGR_01_LL20_NP_DR02_1234_DIL2_dnn5_1/
+	# -repaired10000-CNN_Kfold5_Normal_800_CL2_ADAGR_01_LL20SM_NP_DR02_1234_DIL2_dnn5_1/
+	#classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5_fn, model_dir='/data/Tensorflow/CNN/-repaired10000-CNN_Kfold5_Normal_800_CL2_ADAGR_01_LL20_NP_DR02_1234_DIL2_dnn5_1/')
+	
+	classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5_fn, model_dir='/data/Tensorflow/CNN/-repaired10000-CNN_Kfold5_Normal_800_CL2_ADAGR_01_LL20SM_NP_DR02_1234_DIL2_dnn5_1/')
+	
 	
 	### Evaluate the model
 	print('\nModel evaluation\n\n\n')
@@ -85,7 +91,8 @@ def main(argv):
 	y_probability = []
 	total_probability = 0
 	y_predicted_new = []
-	limit = 1.0
+	limit = 0.96
+	unhealthy_probabilities = pandas.Series()
 	
 	for pred_dict, expec in zip(predictions, expected):
 		class_id = pred_dict['class_ids']
@@ -98,6 +105,9 @@ def main(argv):
 		y_probability.append(pred_dict['probabilities'][1]) # For positive label in ROC-curve
 		
 		#predictvaluefile.write(str(pred_dict) + '\n\r')
+		
+		if inverted_label_mapping[class_id] == 1:
+			unhealthy_probabilities = unhealthy_probabilities.append(pandas.Series([probability]))
 		
 		if inverted_label_mapping[class_id] == 1 and probability < limit:
 			y_predicted_new.append(0)
@@ -117,6 +127,8 @@ def main(argv):
 	dataloader_validate.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
 	dataloader_validate.print_cm(confusion_matrix_new, list(label_mapping.keys()), file_suffix + 'New')
 	dataloader_validate.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), file_suffix)
+	
+	dataloader_validate.print_probabilities(unhealthy_probabilities, file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))

@@ -9,6 +9,23 @@ from os.path import isfile, join
 import sys
 
 
+def checkdates (directory):
+
+	datafiles = []
+	for item in listdir(directory): 
+		if isfile(join(directory, item)):
+			datafiles.append(directory + item)
+	
+	for datafile in datafiles:
+		dataframe = pandas.read_csv(datafile, sep=";", index_col=False)
+
+	numberofdates = 0
+	for index, row in dataframe.iterrows():
+		if row['truck_date'] >= '2018-08-15':
+			numberofdates += 1
+			
+	print(numberofdates)
+
 def build_frameUpsample(directory):
 
 	datafiles = []
@@ -112,7 +129,7 @@ def build_frameV3(directory_data):
 
 	datestring = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S").replace(' ', '--')
 	datestring = datestring.replace(':', '-')
-	csv_data.to_csv('data_frameV3--' + datestring + '.csv', sep=';', index = False, index_label = False)
+	csv_data.to_csv('data_frameV3New_validate--' + datestring + '.csv', sep=';', index = False, index_label = False)
 
 
 def build_frame(directory_data, directory_labels):
@@ -322,7 +339,9 @@ def analyse_frame(directory):
 
 #build_frame('Data2/Flatten/', 'Data/Labels/')	
 
-build_frameV3('Data2/V3/')
+#build_frameV3('Data2/V3/V3_Validate/')
+
+checkdates('Data2/V1/Half_repaired/')
 	
 #check_chassis('Data/...') #
 

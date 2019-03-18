@@ -337,7 +337,7 @@ def cnn_model_dnn5_fn(features, labels, mode):
 	# Logits layer
 	# Input Tensor Shape: [batch_size, 1024]
 	# Output Tensor Shape: [batch_size, 2]
-	logits = tensorflow.layers.dense(inputs=dense4, units=2)
+	logits = tensorflow.layers.dense(inputs=dense4, units=2, activation=tensorflow.nn.softmax)
 
 	# Generate predictions (for PREDICT and EVAL mode)
 	# Add `softmax_tensor` to the graph. It is used for PREDICT and by the
