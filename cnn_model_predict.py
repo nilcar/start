@@ -63,32 +63,11 @@ def predict_on_model(data_directory, model_path, choosen_label):
 		
 	print('Function called: ' + str(__name__))
 	
-	
-	
-	data_path = data_directory
-	
-	file_suffix = '-' + choosen_label
-	label_mapping = {0:0, 1:1}
-	inverted_label_mapping = {}
-	for key, value in label_mapping.items():
-		inverted_label_mapping[value] = key
-		
-	print('Open resultfile.')
-	
-	resultfile = open("Results/model_results" + file_suffix + ".txt", "w")
-	resultfile.write('\n\rModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\r')
-	resultfile.write('Choosen label: ' + choosen_label + '\n\r')
-	resultfile.write('Data path: ' + str(data_path) + '\n\r')
-	resultfile.write('Label mapping: ' + str(label_mapping) + '\n\r')
-	resultfile.write('Inverted label mapping: ' + str(inverted_label_mapping) + '\n\r')
-	resultfile.flush()
-	
 	#Get the dataframe to validate on
-	validationframe = dataloader_predict.loadValidationFrame(data_path)
+	validationframe = dataloader_predict.loadValidationFrame(data_directory)
 	
 	# Get validation model data
-	validationset, labels_validate, label_mapping, int_labels_validate = \
-		dataloader_predict.get_model_data(validationframe, label_mapping, choosen_label)
+	validationset, chassis = dataloader_predict.get_model_data(validationframe, choosen_label)
 	
 	validate_data = validationset.values.astype(numpy.float32)
 	
@@ -96,76 +75,39 @@ def predict_on_model(data_directory, model_path, choosen_label):
 	
 	classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5CL3_fn, model_dir=model_path)
 	
-	
 	### Evaluate the model
-	print('\nModel evaluation\n\n\n')
-	resultfile.write('\n\rModel evaluation\n\r\n')
-	expected = list(int_labels_validate) # The integer representation of the labels. Converts with: inverted_label_mapping() to label
-	# Make the predictions on the supplied data on the saved model.
 	predictions = classifier.predict(input_fn=cnn_validate_input_fn)
 	
-	template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
-	predictfile = open("Results/predictions" + file_suffix + ".txt", "w")
-	
-	number_of_matches = 0
 	number_of_validations = 0
-	y_true = []
-	y_predicted = []
-	y_probability = []
-	total_probability = 0
-	y_predicted_new = []
-	limit = 0.96
-	unhealthy_probabilities = pandas.Series()
-	
-	for pred_dict, expec in zip(predictions, expected):
+	y_predicted = [] # pandas.Series()
+	y_probability = [] # pandas.Series()
+
+	for pred_dict in predictions:
 		class_id = pred_dict['class_ids']
 		probability = pred_dict['probabilities'][class_id]
-		resultfile.write('\n\r')
-		resultfile.write(template.format(inverted_label_mapping[class_id], 100 * probability, inverted_label_mapping[expec]))
+		if number_of_validations < 5:
+			print('Classsification: ' + str(class_id) + ' Probability: ' + str(probability * 100))
 		number_of_validations += 1
-		y_true.append(inverted_label_mapping[expec])
-		y_predicted.append(inverted_label_mapping[class_id])
-		y_probability.append(pred_dict['probabilities'][1]) # For positive label in ROC-curve
+		#y_predicted.append(pandas.Series([class_id])) # Classification
+		#y_probability.append(pandas.Series([probability * 100])) # In percent
+		y_predicted.append(class_id) # Classification
+		y_probability.append(probability * 100) # In percent
 		
-		# Collect probability values for unhealthy trucks for plotting
-		if inverted_label_mapping[class_id] == 1:
-			unhealthy_probabilities = unhealthy_probabilities.append(pandas.Series([probability]))
 		
-		# Reclassify unhealthy truks whos probability is under choosen limit
-		if inverted_label_mapping[class_id] == 1 and probability < limit:
-			y_predicted_new.append(0)
-		else:
-			y_predicted_new.append(class_id)
+		#print('Classsification: ' + str(pandas.Series([class_id])) + ' Probability: ' + str(pandas.Series([probability * 100])))
 		
-		# Calculate the number of correct predicted classes and print to file
-		if str(inverted_label_mapping[class_id]) == str(inverted_label_mapping[expec]):
-			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
-			number_of_matches += 1
-			total_probability += 100 * probability
-					
-	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
-	print(confusion_matrix_result)
-	# CM regarding with potentially reclassified samples
-	confusion_matrix_new = confusion_matrix(y_true, y_predicted_new, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
-	print(confusion_matrix_new)
+	dataframe = pandas.DataFrame()
+	dataframe['Chassi_nr'] = chassis
+	dataframe['Classification'] = pandas.Series(y_predicted).values
+	dataframe['Prediction Value'] = pandas.Series(y_probability).values
 	
-	dataloader_predict.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
-	dataloader_predict.print_cm(confusion_matrix_new, list(label_mapping.keys()), file_suffix + 'New')
-	dataloader_predict.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), file_suffix)
-	dataloader_predict.print_probabilities(unhealthy_probabilities, file_suffix)
-	
-	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
-	predictfile.write('\n\rTotal: ' + str(number_of_validations))
-	predictfile.write('\n\rMatches: ' + str(number_of_matches))
-	predictfile.write('\n\rAverage matches probability: ' + str(total_probability / number_of_matches))
-	resultfile.write('\n\r******************************\n\r')
-	resultfile.close()
-	predictfile.close()
+	print(dataframe.head())
 	
 	
 	
 	
-def main(argv):
+	
+def main():
 	
 	#tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
 	#tensorflow.app.run()
@@ -173,7 +115,7 @@ def main(argv):
 	print('Tensorflow running')
 	
 	#cnn_model_predict.predict_on_model('Data2/V3/', '/data/Tensorflow/CNN/-repaired15000-CNN_Kfold5_Normal_800_CL3_ADAGR_01_LL20_NP_DR02_1234_DIL3_dnn5_1/', 'repaired')
-	predict_on_model('Data2/V3/', '/data/Tensorflow/CNN/-repaired15000-CNN_Kfold5_Normal_800_CL3_ADAGR_01_LL20_NP_DR02_1234_DIL3_dnn5_1/', 'repaired')
+	predict_on_model('Data2/V3/', '/data/Tensorflow/CNN/-repaired15000-CNN_Kfold5_Normal_800_CL3_ADAGR_01_LL20_NP_DR02_1234_DIL3_dnn5_1/', 'T_CHASSIS')
 	
 
 if __name__ == '__main__':
