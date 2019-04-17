@@ -40,32 +40,12 @@ def loadValidationFrame(directory):
 
 
 	
-def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
+def get_model_data(dataframe, choosen_label = 'T_CHASSIS'):
 
-	# Clean up the dataframe to be converted into tensorflow datasets (features and labels)
-	string_labels = dataframe.pop(choosen_label)
-	chassis = dataframe.pop('T_CHASSIS')
+	chassis = dataframe.pop(choosen_label)
 	dataframe = dataframe.loc[:, '1_1':'20_20']
-	
-			
-	# Map all labels to integer representation
-	int_labels = pandas.Series()
-	for label in string_labels:
-		#print(label_mapping[label])
-		try:
-			intlabel = label_mapping[label]
-			new_label = pandas.Series([intlabel])
-			int_labels = int_labels.append(new_label, ignore_index=True)
-		except KeyError:
-			print('Error... Missing label: ' + label)
-				
-			#print(new_label)
-				
-	#int_labels.reset_index()
-	print('int labels size:' + str(int_labels.size))
-	#print(int_labels)
 
-	return dataframe, chassis, label_mapping, int_labels
+	return dataframe, chassis
 	
 
 def eval_input_fn(features, labels, batch_size):
