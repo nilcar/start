@@ -97,7 +97,7 @@ def predict_on_model(data_directory, model_path, choosen_label):
 		#print('Classsification: ' + str(pandas.Series([class_id])) + ' Probability: ' + str(pandas.Series([probability * 100])))
 		
 	dataframe = pandas.DataFrame()
-	dataframe['Chassi_nr'] = chassis
+	dataframe['Chassi_nr'] = chassis.values
 	dataframe['Classification'] = pandas.Series(y_predicted).values
 	dataframe['Prediction Value'] = pandas.Series(y_probability).values
 	
