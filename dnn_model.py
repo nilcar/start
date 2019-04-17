@@ -60,7 +60,7 @@ def main(argv):
 	file_suffix = '-' + choosen_label + '-' + args.hidden_units + '-' + str(args.train_steps) + '-' + args.suffix
 	
 	dropout = None
-	kfolds = 0
+	kfolds = 5
 	
 	resultfile = open("Results/model_results" + file_suffix + ".txt", "w")
 	resultfile.write('\n\rModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\r')
@@ -249,7 +249,7 @@ def main(argv):
 		number_of_validations += 1
 		y_true.append(inverted_label_mapping[expec])
 		y_predicted.append(inverted_label_mapping[class_id])
-		y_probability.append(probability)
+		y_probability.append(pred_dict['probabilities'][1])
 		
 		if str(inverted_label_mapping[class_id]) == str(inverted_label_mapping[expec]):
 			predictfile.write('Percent: ' + str(100 * probability) + '  ' + choosen_label + ': ' + str(inverted_label_mapping[expec]) + '\n\r')
@@ -257,8 +257,8 @@ def main(argv):
 
 	confusion_matrix_result = confusion_matrix(y_true, y_predicted, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
 	print(confusion_matrix_result)
-	#dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
-	#dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), list(label_mapping.keys()), file_suffix)
+	dataloader.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
+	dataloader.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))

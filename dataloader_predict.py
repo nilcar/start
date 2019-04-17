@@ -44,21 +44,9 @@ def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 
 	# Clean up the dataframe to be converted into tensorflow datasets (features and labels)
 	string_labels = dataframe.pop(choosen_label)
+	chassis = dataframe.pop('T_CHASSIS')
 	dataframe = dataframe.loc[:, '1_1':'20_20']
-			
-	# Assumes initial label_mapping from label data file as input to this function
-	next_index = len(label_mapping) # Assumes that label_mapping was built ordered from 0
-	for label in string_labels:
-		#print(label_mapping[label])
-		try:
-			intlabel = label_mapping[label] # Only to see if the label is possible to map
-		except KeyError:
-			print('Found missing label:  + label')
-			label_mapping[label] = next_index
-			next_index = next_index + 1
-
-	#print('Length of label_mapping: ' + str(len(label_mapping)))
-	#print(label_mapping)
+	
 			
 	# Map all labels to integer representation
 	int_labels = pandas.Series()
@@ -77,7 +65,7 @@ def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 	print('int labels size:' + str(int_labels.size))
 	#print(int_labels)
 
-	return dataframe, string_labels, label_mapping, int_labels
+	return dataframe, chassis, label_mapping, int_labels
 	
 
 def eval_input_fn(features, labels, batch_size):

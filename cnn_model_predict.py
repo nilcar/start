@@ -1,8 +1,8 @@
 
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+#from __future__ import absolute_import
+#from __future__ import division
+#from __future__ import print_function
 
 
 import pandas
@@ -16,47 +16,64 @@ import sys
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
-import dataloader_validate # Holds helpfunctions and print functions for statistics
-import cnn_config_saved # Holds at least the network configuration of at least one saved model
+#import dataloader # Holds helpfunctions and print functions for statistics
+#import cnn_config # Holds at least one network configuration (one must be pointed out here for creation of the estimator)
 
+import dataloader_predict
+import cnn_config_predict
+import cnn_config_saved
 
 """
 Description:
-This is the main programfile in order to validate (make predictions) on a saved trained CNN model (the path to the model is pointed out when creating the estimator, see code below)
+This is the main programfile in order to train, test and validate a CNN network solving a binary classification problem for given indata.
 The program is implemented using "Tensorflow" backend library version 1.11 (Python version 3.5)
 
 Input:
+batch_size: The size of the batch size to be used for training (recommended:100)
+train_steps: The number of steps to train the model, (recommended > 5000)
+nr_epochs: The number of epochs to train the model, (recommended:0 implies None in the model training)
+choosen_label: The label with "True" values for healthiness of a truck (unhealthy shall be marked to 1, 0 otherwise)
+data_path: The path to a folder holding one and only one csv kommaseparated datafile with at least columns 1_1 .. 20_20 for features and one column(choosen_label) holding the labeldata.
+fixed_selection: Can be true or false, implies two different predefined data-selections, see function loadData in file dataloader.
+suffix: Only a filename suffix in order to separate printed results to predefined "Result" folder for different program runs.
 
 Output:
-
+A trained and saved model to the directory pointed out, see code below creating the estimator.
+Two printed files holding training and prediction statistics.
+Two Confusion matrices, a ROC-curve and a distribution histogram for unhealthy trucks probability values.
 
 Others:
 - Requires a folder 'Results' in the same directory as this programfile where results will be stored.
-- The defined network shall be in the cnn_config_saved.py file, the specific network is pointed out creating the estimator, see code below.
-  It is important that the pointed CNN network in cnn_config_saved.py file complies to the saved model!
-- Example for usage: python3.5 cnn_model_validate.py --choosen_label T_CHASSIS --data_path Validationdata/ --suffix Suffix
+- The defined network shall be in the cnn_config.py file, the specific network is pointed out creating the estimator, see code below.
+- Example for usage: python3.5 cnn_model.py --batch_size 100 --train_steps 1000 nr_epochs 0 --fixed_selection false --choosen_label T_CHASSIS --data_path Validationdata/ --suffix Suffix
 """
 
+#tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
+#tensorflow.app.run()
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--choosen_label', default='T_CHASSIS', type=str, help='the label to evaluate')
-parser.add_argument('--data_path', default='Data/', type=str, help='path to one data source file for prediction')
-parser.add_argument('--suffix', default='', type=str, help='To separate result filenames')
-
-
-def main(argv):
-
-	args = parser.parse_args(argv[1:])
 	
-	choosen_label = args.choosen_label
-	data_path = args.data_path
-	file_suffix = '-' + choosen_label + '-' + args.suffix
-	# Label_mapping holds key value pairs where key is the label and value its integer representation
+	
+
+def predict_on_model(data_directory, model_path, choosen_label):
+
+
+	#tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
+	#tensorflow.app.run()
+		
+	print('Function called: ' + str(__name__))
+	
+	
+	
+	data_path = data_directory
+	
+	file_suffix = '-' + choosen_label
 	label_mapping = {0:0, 1:1}
 	inverted_label_mapping = {}
 	for key, value in label_mapping.items():
 		inverted_label_mapping[value] = key
+		
+	print('Open resultfile.')
 	
 	resultfile = open("Results/model_results" + file_suffix + ".txt", "w")
 	resultfile.write('\n\rModel training: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '\n\n\r')
@@ -67,22 +84,17 @@ def main(argv):
 	resultfile.flush()
 	
 	#Get the dataframe to validate on
-	validationframe = dataloader_validate.loadValidationFrame(data_path)
+	validationframe = dataloader_predict.loadValidationFrame(data_path)
 	
 	# Get validation model data
 	validationset, labels_validate, label_mapping, int_labels_validate = \
-		dataloader_validate.get_model_data(validationframe, label_mapping, choosen_label)
+		dataloader_predict.get_model_data(validationframe, label_mapping, choosen_label)
 	
 	validate_data = validationset.values.astype(numpy.float32)
 	
 	cnn_validate_input_fn = tensorflow.estimator.inputs.numpy_input_fn(x={"x": validate_data}, y=None, num_epochs=1, shuffle=False)
 	
-	# Create the Estimator with saved model from appointed directory
-	#classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5_fn, model_dir='/data/Tensorflow/CNN/-repaired10000-CNN_Kfold5_Normal_800_CL2_ADAGR_01_LL20_NP_DR02_1234_DIL2_dnn5_1/')
-	#classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5_fn, model_dir='/data/Tensorflow/CNN/-repaired10000-CNN_Kfold5_Normal_800_CL2_ADAGR_01_LL20SM_NP_DR02_1234_DIL2_dnn5_1/')
-	classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5CL3_fn, model_dir='/data/Tensorflow/CNN/-repaired15000-CNN_Kfold5_Normal_800_CL3_ADAGR_01_LL20_NP_DR02_1234_DIL3_dnn5_1/')
-	
-	#classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5CL3_fn, model_dir='/data/Tensorflow/CNN/X/')
+	classifier = tensorflow.estimator.Estimator(model_fn=cnn_config_saved.cnn_model_dnn5CL3_fn, model_dir=model_path)
 	
 	
 	### Evaluate the model
@@ -137,10 +149,10 @@ def main(argv):
 	confusion_matrix_new = confusion_matrix(y_true, y_predicted_new, labels=list(label_mapping.keys()).sort()) # labels=[0,1]
 	print(confusion_matrix_new)
 	
-	dataloader_validate.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
-	dataloader_validate.print_cm(confusion_matrix_new, list(label_mapping.keys()), file_suffix + 'New')
-	dataloader_validate.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), file_suffix)
-	dataloader_validate.print_probabilities(unhealthy_probabilities, file_suffix)
+	dataloader_predict.print_cm(confusion_matrix_result, list(label_mapping.keys()), file_suffix)
+	dataloader_predict.print_cm(confusion_matrix_new, list(label_mapping.keys()), file_suffix + 'New')
+	dataloader_predict.print_roc_curve(numpy.array(y_true), numpy.array(y_probability), file_suffix)
+	dataloader_predict.print_probabilities(unhealthy_probabilities, file_suffix)
 	
 	predictfile.write('\n\rNumber of matches in percent: ' + str(100 * number_of_matches / number_of_validations))
 	predictfile.write('\n\rTotal: ' + str(number_of_validations))
@@ -150,12 +162,22 @@ def main(argv):
 	resultfile.close()
 	predictfile.close()
 	
+	
+	
+	
+def main(argv):
+	
+	#tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
+	#tensorflow.app.run()
+	
+	print('Tensorflow running')
+	
+	#cnn_model_predict.predict_on_model('Data2/V3/', '/data/Tensorflow/CNN/-repaired15000-CNN_Kfold5_Normal_800_CL3_ADAGR_01_LL20_NP_DR02_1234_DIL3_dnn5_1/', 'repaired')
+	predict_on_model('Data2/V3/', '/data/Tensorflow/CNN/-repaired15000-CNN_Kfold5_Normal_800_CL3_ADAGR_01_LL20_NP_DR02_1234_DIL3_dnn5_1/', 'repaired')
+	
+
 if __name__ == '__main__':
     tensorflow.logging.set_verbosity(tensorflow.logging.INFO)
-    tensorflow.app.run(main)
-	
-	
-	
-	
+    tensorflow.app.run(main)	
 	
 	
