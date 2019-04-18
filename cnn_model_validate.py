@@ -26,9 +26,12 @@ This is the main programfile in order to validate (make predictions) on a saved 
 The program is implemented using "Tensorflow" backend library version 1.11 (Python version 3.5)
 
 Input:
+choosen_label: The datacolumn holding truth about beeing repaired (0,1), 1 = repaired
+data_path: The path to a directory holding a single datafile to predict on
+suffix: Only a suffix given to files printed out in Result directory
 
 Output:
-
+Several files showing prediction results...
 
 Others:
 - Requires a folder 'Results' in the same directory as this programfile where results will be stored.
@@ -37,13 +40,10 @@ Others:
 - Example for usage: python3.5 cnn_model_validate.py --choosen_label T_CHASSIS --data_path Validationdata/ --suffix Suffix
 """
 
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--choosen_label', default='T_CHASSIS', type=str, help='the label to evaluate')
 parser.add_argument('--data_path', default='Data/', type=str, help='path to one data source file for prediction')
 parser.add_argument('--suffix', default='', type=str, help='To separate result filenames')
-
 
 def main(argv):
 

@@ -14,7 +14,19 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 import itertools
 
+"""
+Description:
+Defines a dataframe for validation from specified directory
+Input:
+directory: The directory holding the csv file(s)
 
+Output:
+A dataframe holding the selected validation data
+
+Others:
+The read csv file(s) must contain columns 1_1 .. 20_20 and a column PARTITIONNING where the value 3_Validation is
+set for all rows to be selected for validation. 
+"""
 
 def loadValidationFrame(directory):
 
@@ -39,6 +51,24 @@ def loadValidationFrame(directory):
 	return dataframe
 
 
+"""
+Description:
+Separates data from labeldata for choosen label
+
+Input:
+The dataframe to be separated
+Labelmapping {string to integer values}
+Choosen label for the true label values
+
+Output:
+Data frame with data
+Stringlabels representing original label values
+The untouched label_mapping
+Label values as integer representation
+
+Others:
+
+"""	
 	
 def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 
@@ -80,35 +110,22 @@ def get_model_data(dataframe, label_mapping, choosen_label = 'T_CHASSIS'):
 	return dataframe, string_labels, label_mapping, int_labels
 	
 
-def eval_input_fn(features, labels, batch_size):
-	"""An input function for evaluation or prediction"""
-	features=dict(features)
-	if labels is None:
-		# No labels, use only features.
-		inputs = features
-	else:
-		inputs = (features, labels)
-
-	# Convert the inputs to a Dataset.
-	dataset = tensorflow.data.Dataset.from_tensor_slices(inputs)
-
-	# Batch the examples
-	assert batch_size is not None, "batch_size must not be None"
-	dataset = dataset.batch(batch_size)
-	
-	version_full = tensorflow.__version__
-	x, version, y = version_full.split('.')
-	print('Versionfull: ' + version_full)
-	print('Version: ' + version)
-	
-	if version >= '5':
-		# Return the dataset.
-		return dataset
-	else:
-		return dataset.make_one_shot_iterator().get_next() #for 1.4
-
 		
+"""
+Description:
+Prints a plotted Confusion matrix to the resultfolder with file-suffix
 
+Input:
+A confusion matrix with values
+Labels do define the axis
+Filesuffix to append the saved file.
+
+Output:
+A written file.
+
+Others:
+
+"""
 def print_cm(confusion_matrix, labels, filesuffix):	
 	
 	if len(labels) == 2:
@@ -138,6 +155,21 @@ def print_cm(confusion_matrix, labels, filesuffix):
 	
 
 
+"""
+Description:
+Plots a ROC-curve for positive label = 1
+
+Input:
+True labelvalues
+Probability values for the positive label (1)
+File-suffix for the saved file
+
+Output:
+A written file.
+
+Others:
+
+"""	
 	
 def print_roc_curve(y_true, y_prob, filesuffix):
 
@@ -156,6 +188,20 @@ def print_roc_curve(y_true, y_prob, filesuffix):
 	plt.savefig('Results/ROC_curve-' + filesuffix + '.png')
 	plt.clf()
 
+"""
+Description:
+Plots a hisstogram showing the distribution for the predicted probability values
+
+Input:
+Predicted probability values, likely for positive label 1
+File-suffix for the saved file
+
+Output:
+A written file.
+
+Others:
+
+"""
 
 def print_probabilities(probabilities, file_suffix):
 

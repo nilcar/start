@@ -432,7 +432,7 @@ Number of folds
 The dataframe with train and test data to split
 
 Output:
-A list of datframes for each fold
+A list of dataframes for each fold
 
 Others:
 
@@ -488,6 +488,7 @@ Labels do define the axis
 Filesuffix to append the saved file.
 
 Output:
+A written file.
 
 Others:
 
@@ -566,7 +567,7 @@ Probability values for the positive label (1)
 File-suffix for the saved file
 
 Output:
-
+A written file.
 
 Others:
 
@@ -597,7 +598,7 @@ Predicted probability values, likely for positive label 1
 File-suffix for the saved file
 
 Output:
-
+A written file.
 
 Others:
 
